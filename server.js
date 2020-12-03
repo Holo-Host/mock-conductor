@@ -2,13 +2,16 @@ const WebSocket = require('ws')
 const msgpack = require('@msgpack/msgpack')
 const _ = require('lodash')
 
-const wss = new WebSocket.Server({ port: 8888 })
+const port = process.argv[2] || 8888
+
+const wss = new WebSocket.Server({ port })
 
 const APP_INFO_TYPE = 'app_info'
 const ZOME_CALL_TYPE = 'zome_call_invocation'
 
-// responseQueues are keyed by request type. 
+console.log('BLAM')
 
+// responseQueues are keyed by a stringified combination of type and data. See generateResponseKey
 let responseQueues = {}
 
 function initResponseQueues() {
@@ -49,6 +52,11 @@ function clearResponses (ws) {
 
   initResponseQueues()
   ws.send(JSON.stringify({ok: true}))
+}
+
+function shutdownServer(ws) {
+  ws.terminate()
+  process.exit()
 }
 
 function handleHCRequest (message, ws) {
@@ -119,6 +127,9 @@ wss.on('connection', function connection(ws) {
         break
       case 'clear_responses':
         clearResponses(ws)
+        break
+      case 'shutdown_server':
+        shutdownServer(ws)
         break
       default:
         handleHCRequest(message, ws)
