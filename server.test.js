@@ -1,29 +1,21 @@
-const childProcess = require('child_process')
 const { AppWebsocket } = require('@holochain/conductor-api')
-const WebSocket = require('ws')
 const wait = require('waait')
+const MockHolochainServer = require('./server')
+const { APP_INFO_TYPE, ZOME_CALL_TYPE } = MockHolochainServer
 
 const PORT = 8888
 const socketPath = `ws://localhost:${PORT}`
 
 describe('server', () => {
-  var ws, serverProcess
+  var mockHolochainServer
 
   beforeAll(async () => {
-    serverProcess = childProcess.fork(`${__dirname}/server.js`, [PORT])
+    mockHolochainServer = new MockHolochainServer(PORT)
     await wait (2000)
   })
 
-  beforeEach(() => {
-    ws = new WebSocket(socketPath)
-  })
-
-  afterEach(() => {
-    ws.terminate()
-  })
-
   afterAll(async () => {
-    serverProcess.kill()
+    mockHolochainServer.close()
   })
 
   it('returns the given response to an appInfo call', async () => {
@@ -31,22 +23,13 @@ describe('server', () => {
       'hash', 'agentKey'
     ]
 
-    const appId = 'test-app'
+    const appId = 'test-app'  
 
-    const appInfoMock = JSON.stringify({
-      cmd: 'add_response',
-      requestType: 'app_info',
-      data: {
-        app_id: appId
-      },
-      response: {
-        cell_data: [[mockedCellId]]
-      }
-    })
-  
-    ws.on('open', async () => {
-      ws.send(appInfoMock)
-    })
+    const appInfoData = { app_id: appId }
+    
+    const expectedResponse = { cell_data: [[mockedCellId]] }
+
+    mockHolochainServer.once(APP_INFO_TYPE, appInfoData, expectedResponse)
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
@@ -73,16 +56,7 @@ describe('server', () => {
       field2: 'value2'
     }
 
-    const callZomeMock = JSON.stringify({
-      cmd: 'add_response',
-      requestType: 'zome_call_invocation',
-      data: callZomeData,
-      response: expectedResponse
-    })
-  
-    ws.on('open', async () => {
-      ws.send(callZomeMock)
-    })
+    mockHolochainServer.once(ZOME_CALL_TYPE, callZomeData, expectedResponse)
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 

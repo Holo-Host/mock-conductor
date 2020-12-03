@@ -2,119 +2,87 @@ const WebSocket = require('ws')
 const msgpack = require('@msgpack/msgpack')
 const _ = require('lodash')
 
-const port = process.argv[2] || 8888
-
-const wss = new WebSocket.Server({ port })
-
-const APP_INFO_TYPE = 'app_info'
-const ZOME_CALL_TYPE = 'zome_call_invocation'
-
-// responseQueues are keyed by a stringified combination of type and data. See generateResponseKey
-let responseQueues = {}
-
-function initResponseQueues() {
-  responseQueues = {}
-}
-
 function generateResponseKey (type, data) {
   return `${type}:${JSON.stringify(_.omit(data, 'payload'))}`
 }
 
-function addResponse (message, ws) {
-  const { requestType, data, response } = message
+const APP_INFO_TYPE = 'app_info'
+const ZOME_CALL_TYPE = 'zome_call_invocation'
 
-  console.log('adding response', message)
+class MockHolochainServer {
+  constructor(appPort, adminPort) {
+    this.appPort = appPort
+    this.adminPort = adminPort
+    this.responseQueues = {}
 
-  if (![APP_INFO_TYPE, ZOME_CALL_TYPE].includes(requestType)) {
-    ws.send(JSON.stringify({error: `Unknown request type: ${requestType}`}))
+    this.wss = new WebSocket.Server({ port: appPort })
+
+    // these have to be arrow functions to avoid rebind 'this'
+    this.wss.on('connection', ws => {
+      ws.on('message', message => {
+        this.handleHCRequest(message, ws)
+      })
+    })
   }
 
-  const responseKey = generateResponseKey(requestType, data)
-
-  console.log('responseKey', responseKey)
-
-
-  if (!responseQueues[responseKey]) {
-    responseQueues[responseKey] = []
-  }
-
-  responseQueues[responseKey].push(response)
-
-  console.log('about to send result')
-
-  ws.send(JSON.stringify({ok: true}))
-}
-
-function clearResponses (ws) {
-  initResponseQueues()
-  ws.send(JSON.stringify({ok: true}))
-}
-
-function shutdownServer(ws) {
-  ws.terminate()
-  process.exit()
-}
-
-function handleHCRequest (message, ws) {
-  const decoded = msgpack.decode(message)
-  const { id } = decoded
-  const request = msgpack.decode(decoded.data)
-  const { type, data } = request 
-
-  console.log('Handling HCC request', type, data)
-
-  const responseKey = generateResponseKey(type, data)
-
-  if (!responseQueues[responseKey]) {
-    throw new Error(`No more responses for: ${responseKey}`)
-  }
-
-  var responsePayload = responseQueues[responseKey].pop()
-
-  if (type === ZOME_CALL_TYPE) {
-    // there's an extra layer of encoding in the zome call responses
-    responsePayload = msgpack.encode(responsePayload)
-  }
+  once (type, data, response) {
+    if (![APP_INFO_TYPE, ZOME_CALL_TYPE].includes(type)) {
+      throw new Error (`Unknown request type: ${type}`)
+    }
   
-  const responseData = msgpack.encode({
-    type,
-    data: responsePayload
-  })  
+    const responseKey = generateResponseKey(type, data)
 
-
-  const response = {
-    type: 'Response',
-    id,
-    data: responseData
+    if (!this.responseQueues[responseKey]) {
+      this.responseQueues[responseKey] = []
+    }
+  
+    this.responseQueues[responseKey].push(response)  
   }
 
-  ws.send(msgpack.encode(response))
+  clearResponses () {
+    this.responseQueues = {}
+  }
+
+  close () {
+    this.wss.close()
+  }
+
+  handleHCRequest (message, ws) {
+    const decoded = msgpack.decode(message)
+    const { id } = decoded
+    const request = msgpack.decode(decoded.data)
+    const { type, data } = request 
+  
+    const responseKey = generateResponseKey(type, data)
+  
+    if (!this.responseQueues[responseKey]) {
+      throw new Error(`No more responses for: ${responseKey}`)
+    }
+  
+    var responsePayload = this.responseQueues[responseKey].pop()
+  
+    if (type === ZOME_CALL_TYPE) {
+      // there's an extra layer of encoding in the zome call responses
+      responsePayload = msgpack.encode(responsePayload)
+    }
+    
+    const responseData = msgpack.encode({
+      type,
+      data: responsePayload
+    })  
+  
+  
+    const response = {
+      type: 'Response',
+      id,
+      data: responseData
+    }
+  
+    ws.send(msgpack.encode(response))
+  }
+
 }
 
-wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(message) {
-    try {
-      const parsedMessage = JSON.parse(message)
-
-      console.log('parsedMessage', parsedMessage)
-
-      switch (parsedMessage.cmd) {
-        case 'add_response':
-          console.log('going to add response')
-          addResponse(parsedMessage, ws)
-          break
-        case 'clear_responses':
-          clearResponses(ws)
-          break
-        case 'shutdown_server':
-          shutdownServer(ws)
-          break
-        default:
-          throw new Error(`Unrecognized command: ${parsedMessage.cmd}`)
-      }
-    } catch (e) {
-      // failed to parse so treat it as a HC request
-      return handleHCRequest(message, ws)
-    }    
-  })
-})
+module.exports = MockHolochainServer
+module.exports.APP_INFO_TYPE = APP_INFO_TYPE
+module.exports.ZOME_CALL_TYPE = ZOME_CALL_TYPE
