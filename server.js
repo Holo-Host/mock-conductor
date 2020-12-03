@@ -23,17 +23,24 @@ function generateResponseKey (type, data) {
 function addResponse (message, ws) {
   const { requestType, data, response } = message
 
+  console.log('adding response', message)
+
   if (![APP_INFO_TYPE, ZOME_CALL_TYPE].includes(requestType)) {
     ws.send(JSON.stringify({error: `Unknown request type: ${requestType}`}))
   }
 
   const responseKey = generateResponseKey(requestType, data)
 
+  console.log('responseKey', responseKey)
+
+
   if (!responseQueues[responseKey]) {
     responseQueues[responseKey] = []
   }
 
   responseQueues[responseKey].push(response)
+
+  console.log('about to send result')
 
   ws.send(JSON.stringify({ok: true}))
 }
@@ -53,6 +60,8 @@ function handleHCRequest (message, ws) {
   const { id } = decoded
   const request = msgpack.decode(decoded.data)
   const { type, data } = request 
+
+  console.log('Handling HCC request', type, data)
 
   const responseKey = generateResponseKey(type, data)
 
@@ -84,28 +93,28 @@ function handleHCRequest (message, ws) {
 
 wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
-
-    let parsedMessage
-
     try {
-      parsedMessage = JSON.parse(message)
+      const parsedMessage = JSON.parse(message)
+
+      console.log('parsedMessage', parsedMessage)
+
+      switch (parsedMessage.cmd) {
+        case 'add_response':
+          console.log('going to add response')
+          addResponse(parsedMessage, ws)
+          break
+        case 'clear_responses':
+          clearResponses(ws)
+          break
+        case 'shutdown_server':
+          shutdownServer(ws)
+          break
+        default:
+          throw new Error(`Unrecognized command: ${parsedMessage.cmd}`)
+      }
     } catch (e) {
       // failed to parse so treat it as a HC request
-      handleHCRequest(message, ws)
-    }
-
-    switch (parsedMessage.cmd) {
-      case 'add_response':
-        addResponse(parsedMessage, ws)
-        break
-      case 'clear_responses':
-        clearResponses(ws)
-        break
-      case 'shutdown_server':
-        shutdownServer(ws)
-        break
-      default:
-        throw new Error(`Unrecognized command: ${parsedMessage.cmd}`)
-    }
+      return handleHCRequest(message, ws)
+    }    
   })
 })
