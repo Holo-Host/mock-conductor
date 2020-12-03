@@ -9,8 +9,6 @@ const wss = new WebSocket.Server({ port })
 const APP_INFO_TYPE = 'app_info'
 const ZOME_CALL_TYPE = 'zome_call_invocation'
 
-console.log('BLAM')
-
 // responseQueues are keyed by a stringified combination of type and data. See generateResponseKey
 let responseQueues = {}
 
@@ -25,15 +23,11 @@ function generateResponseKey (type, data) {
 function addResponse (message, ws) {
   const { requestType, data, response } = message
 
-  console.log('addResponse', message)
-
   if (![APP_INFO_TYPE, ZOME_CALL_TYPE].includes(requestType)) {
     ws.send(JSON.stringify({error: `Unknown request type: ${requestType}`}))
   }
 
   const responseKey = generateResponseKey(requestType, data)
-
-  console.log('responseKey', responseKey)
 
   if (!responseQueues[responseKey]) {
     responseQueues[responseKey] = []
@@ -41,15 +35,10 @@ function addResponse (message, ws) {
 
   responseQueues[responseKey].push(response)
 
-  console.log('responseQueues', responseQueues)
-
   ws.send(JSON.stringify({ok: true}))
 }
 
 function clearResponses (ws) {
-
-  console.log('clear Responses')
-
   initResponseQueues()
   ws.send(JSON.stringify({ok: true}))
 }
@@ -65,34 +54,23 @@ function handleHCRequest (message, ws) {
   const request = msgpack.decode(decoded.data)
   const { type, data } = request 
 
-  console.log('data', data)
-
   const responseKey = generateResponseKey(type, data)
-
-  console.log('responseKey', responseKey)
-
-  Object.keys(responseQueues).map(key => {
-    console.log('queue   Key', key)
-    console.log('isEqual', responseKey === key)
-  })
-
-  console.log('responseQueues', responseQueues)
-
 
   if (!responseQueues[responseKey]) {
     throw new Error(`No more responses for: ${responseKey}`)
   }
 
-  const responsePayload = responseQueues[responseKey].pop()
-  
-  console.log('responsePayload', responsePayload)
+  var responsePayload = responseQueues[responseKey].pop()
 
+  if (type === ZOME_CALL_TYPE) {
+    // there's an extra layer of encoding in the zome call responses
+    responsePayload = msgpack.encode(responsePayload)
+  }
+  
   const responseData = msgpack.encode({
     type,
     data: responsePayload
   })  
-
-  console.log('responseData', responseData)
 
 
   const response = {
@@ -100,9 +78,6 @@ function handleHCRequest (message, ws) {
     id,
     data: responseData
   }
-
-  console.log('response', response)
-
 
   ws.send(msgpack.encode(response))
 }
@@ -119,9 +94,7 @@ wss.on('connection', function connection(ws) {
       parsedMessage = {}
     }
 
-    console.log('parsedMessage', parsedMessage)
-
-    switch (parsedMessage.type) {
+    switch (parsedMessage.cmd) {
       case 'add_response':
         addResponse(parsedMessage, ws)
         break

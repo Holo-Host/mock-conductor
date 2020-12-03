@@ -7,10 +7,17 @@ const PORT = 8888
 
 describe('server', () => {
   var ws
+
   beforeAll(async () => {
     childProcess.exec(`"${__dirname}/server.js" ${PORT}`);
     await wait(2000)
     ws = new WebSocket(`ws://localhost:${PORT}`)
+  })
+
+  afterAll(async () => {
+    childProcess.exec(`"${__dirname}/server.js" ${PORT}`);
+    await wait(2000)
+    ws.send(JSON.stringify({ cmd: 'shutdown_server' }))
   })
 
   it('responds to an appInfo call', async () => {
