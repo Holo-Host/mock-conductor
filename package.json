@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@msgpack/msgpack": "^2.3.0",
+    "lodash": "^4.17.20",
     "ws": "^7.4.0"
   }
 }

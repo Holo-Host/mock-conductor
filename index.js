@@ -1,77 +1,127 @@
 const WebSocket = require('ws')
 const msgpack = require('@msgpack/msgpack')
+const _ = require('lodash')
 
 const wss = new WebSocket.Server({ port: 8888 })
 
 const APP_INFO_TYPE = 'app_info'
 const ZOME_CALL_TYPE = 'zome_call_invocation'
 
-const holoHashB64 = 'hC0katgCEp09sB8vWFyxeE962bOrpGa4BUyfrHt3tiQkvlW7FX11'
-const agentKeyB64 = 'hCAkwBMB+YPIBQTIQ09ty1HU3ppzLOpU9JYr5lyPflNsjvKjAFr7'
+// responseQueues are keyed by request type. 
 
-const cellId = [
-  Buffer.from(holoHashB64, 'base64'),
-  Buffer.from(agentKeyB64, 'base64')
-]
+let responseQueues = {}
 
-const responseQueues = {
-  [APP_INFO_TYPE]: [],
-  [ZOME_CALL_TYPE]: []
+function initResponseQueues() {
+  responseQueues = {}
+}
+
+function generateResponseKey (type, data) {
+  return `${type}:${JSON.stringify(_.omit(data, 'payload'))}`
+}
+
+function addResponse (message, ws) {
+  const { requestType, data, response } = message
+
+  console.log('addResponse', message)
+
+  if (![APP_INFO_TYPE, ZOME_CALL_TYPE].includes(requestType)) {
+    ws.send(JSON.stringify({error: `Unknown request type: ${requestType}`}))
+  }
+
+  const responseKey = generateResponseKey(requestType, data)
+
+  console.log('responseKey', responseKey)
+
+  if (!responseQueues[responseKey]) {
+    responseQueues[responseKey] = []
+  }
+
+  responseQueues[responseKey].push(response)
+
+  console.log('responseQueues', responseQueues)
+
+  ws.send(JSON.stringify({ok: true}))
+}
+
+function clearResponses (ws) {
+
+  console.log('clear Responses')
+
+  initResponseQueues()
+  ws.send(JSON.stringify({ok: true}))
+}
+
+function handleHCRequest (message, ws) {
+  const decoded = msgpack.decode(message)
+  const { id } = decoded
+  const request = msgpack.decode(decoded.data)
+  const { type, data } = request 
+
+  console.log('data', data)
+
+  const responseKey = generateResponseKey(type, data)
+
+  console.log('responseKey', responseKey)
+
+  Object.keys(responseQueues).map(key => {
+    console.log('queue   Key', key)
+    console.log('isEqual', responseKey === key)
+  })
+
+  console.log('responseQueues', responseQueues)
+
+
+  if (!responseQueues[responseKey]) {
+    throw new Error(`No more responses for: ${responseKey}`)
+  }
+
+  const responsePayload = responseQueues[responseKey].pop()
+  
+  console.log('responsePayload', responsePayload)
+
+  const responseData = msgpack.encode({
+    type,
+    data: responsePayload
+  })  
+
+  console.log('responseData', responseData)
+
+
+  const response = {
+    type: 'Response',
+    id,
+    data: responseData
+  }
+
+  console.log('response', response)
+
+
+  ws.send(msgpack.encode(response))
 }
 
 wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
-    const decoded = msgpack.decode(message)
-    const { id } = decoded
-    const request = msgpack.decode(decoded.data)
-    const { type, data } = request
 
-    if (type === APP_INFO_TYPE) {
-  
-      const { app_id } = data
+    let parsedMessage
 
-      const responseData = msgpack.encode({
-        type: APP_INFO_TYPE,
-        data: {
-          app_id,
-          cell_data: [[cellId, 'holo-hosting-app.dna.gz']]
-        }  
-      })
-
-      const response = {
-        type: 'Response',
-        id,
-        data: responseData
-      }
-
-      ws.send(msgpack.encode(response))
-
-    } else if (type === ZOME_CALL_TYPE) {
-
-      const responseData = msgpack.encode({
-        type: ZOME_CALL_TYPE,
-        data: msgpack.encode([
-          {
-            happ_id: 1,
-            happ_name: 'Happ 1'
-          },
-          {
-            happ_id: 2,
-            happ_name: 'Happ 2'
-          },
-        ])
-      })
-
-      const response = {
-        type: 'Response',
-        id,
-        data: responseData
-      }
-
-      ws.send(msgpack.encode(response))
-    } else {
-      throw new Error(`Unknown request type: ${request.type}`)
+    try {
+      parsedMessage = JSON.parse(message)
+    } catch (e) {
+      // failed to parse so treat it as a HC request
+      parsedMessage = {}
     }
-  });
 
+    console.log('parsedMessage', parsedMessage)
+
+    switch (parsedMessage.type) {
+      case 'add_response':
+        addResponse(parsedMessage, ws)
+        break
+      case 'clear_responses':
+        clearResponses(ws)
+        break
+      default:
+        handleHCRequest(message, ws)
+    }
+  })
 })
