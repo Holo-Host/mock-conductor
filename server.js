@@ -91,7 +91,7 @@ wss.on('connection', function connection(ws) {
       parsedMessage = JSON.parse(message)
     } catch (e) {
       // failed to parse so treat it as a HC request
-      parsedMessage = {}
+      handleHCRequest(message, ws)
     }
 
     switch (parsedMessage.cmd) {
@@ -105,7 +105,7 @@ wss.on('connection', function connection(ws) {
         shutdownServer(ws)
         break
       default:
-        handleHCRequest(message, ws)
+        throw new Error(`Unrecognized command: ${parsedMessage.cmd}`)
     }
   })
 })

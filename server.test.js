@@ -9,14 +9,12 @@ describe('server', () => {
   var ws
 
   beforeAll(async () => {
-    childProcess.exec(`"${__dirname}/server.js" ${PORT}`);
-    await wait(2000)
+    // childProcess.exec(`"${__dirname}/server.js" ${PORT}`);
+    // await wait(4500)
     ws = new WebSocket(`ws://localhost:${PORT}`)
   })
 
   afterAll(async () => {
-    childProcess.exec(`"${__dirname}/server.js" ${PORT}`);
-    await wait(2000)
     ws.send(JSON.stringify({ cmd: 'shutdown_server' }))
   })
 
@@ -26,7 +24,7 @@ describe('server', () => {
     ]
 
     const appInfoMock = JSON.stringify({
-      type: 'add_response',
+      cmd: 'add_response',
       requestType: 'app_info',
       data: {
         app_id: 'test-app'
@@ -36,8 +34,8 @@ describe('server', () => {
       }
     })
   
-    const result = await ws.send(appInfoMock)
-
-    console.log('result', result)
+    ws.on('open', async () => {
+      ws.send(appInfoMock)
+    })
   })
 })
