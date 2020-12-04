@@ -1,7 +1,7 @@
-const { AppWebsocket } = require('@holochain/conductor-api')
+const { AppWebsocket, AdminWebsocket } = require('@holochain/conductor-api')
 const wait = require('waait')
 const MockHolochainServer = require('./server')
-const { APP_INFO_TYPE, ZOME_CALL_TYPE } = MockHolochainServer
+const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE } = MockHolochainServer
 
 const PORT = 8888
 const socketPath = `ws://localhost:${PORT}`
@@ -63,5 +63,30 @@ describe('server', () => {
     const callZomeResult = await appWebsocket.callZome(callZomeData)
 
     expect(callZomeResult).toEqual(expectedResponse)
+  })
+
+  it('returns the given response to an installApp call', async () => {
+    const mockedCellId = [
+      'hash', 'agentKey'
+    ]
+
+    const appId = 'test-app'
+
+    const installAppData = {
+      agent_key: mockedCellId[1],
+      app_id: appId  
+    }
+
+    const expectedResponse = { 
+      app_id: appId, cell_data: [ [ [mockedCellId], 'dna1' ] ] 
+    }
+
+    mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, expectedResponse)
+
+    const adminWebsocket = await AdminWebsocket.connect(socketPath)
+
+    const installAppResult = await adminWebsocket.installApp(installAppData)
+
+    expect(installAppResult).toEqual(expectedResponse)
   })
 })
