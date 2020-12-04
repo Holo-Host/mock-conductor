@@ -43,13 +43,11 @@ class MockHolochainServer {
       this.adminWss = new WebSocket.Server({ port: adminPort })
       this.adminWss.on('connection', ws => {
         ws.on('message', message => {
-          // We could be much cleverer about handling admin calls and simulate installing and attaching apps etc. For now we're keeping it simple
+          // We could be much cleverer about handling admin calls and simulate installing and attaching apps etc. For now we're keeping it simple.
           this.handleHCRequest(message, ws)
         })
       })
     }
-
-    // these have to be arrow functions to avoid rebind 'this'
   }
 
   once (type, data, response) {
