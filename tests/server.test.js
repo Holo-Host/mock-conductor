@@ -1,6 +1,6 @@
 const { AppWebsocket, AdminWebsocket } = require('@holochain/conductor-api')
 const wait = require('waait')
-const MockHolochainServer = require('./server')
+const MockHolochainServer = require('../src/server')
 const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE } = MockHolochainServer
 
 const PORT = 8888
@@ -9,13 +9,33 @@ const socketPath = `ws://localhost:${PORT}`
 describe('server', () => {
   var mockHolochainServer
 
-  beforeAll(async () => {
+  beforeAll(() => {
     mockHolochainServer = new MockHolochainServer(PORT)
-    await wait (2000)
   })
 
-  afterAll(async () => {
+  afterAll(() => {
     mockHolochainServer.close()
+  })
+
+  it('returns two responses in the order provided to next', async () => {
+    const expectedResponse1 = {
+      field1: 'valuea'
+    }
+
+    const expectedResponse2 = {
+      field2: 'valueb'
+    }
+
+    mockHolochainServer.next(expectedResponse1)
+    mockHolochainServer.next(expectedResponse2)
+
+    const appWebsocket = await AppWebsocket.connect(socketPath)
+
+    const response1 = await appWebsocket.appInfo({})
+    const response2 = await appWebsocket.appInfo({})
+
+    expect(response1).toEqual(expectedResponse1)
+    expect(response2).toEqual(expectedResponse2)
   })
 
   it('returns the given response to an appInfo call', async () => {

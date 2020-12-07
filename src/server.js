@@ -1,6 +1,7 @@
 const WebSocket = require('ws')
 const msgpack = require('@msgpack/msgpack')
 const _ = require('lodash')
+const { once } = require('lodash')
 
 function generateResponseKey (type, data) {
   return `${type}:${JSON.stringify(_.omit(data, 'payload'))}`
@@ -19,16 +20,21 @@ const LIST_DNAS_TYPE = 'list_dnas'
 const LIST_CELL_IDS_TYPE = 'list_cell_ids'
 const LIST_ACTIVE_APP_IDS_TYPE = 'list_active_app_ids'
 
+// next type is used internally for the next queue
+const NEXT_TYPE = 'next'
+
 const REQUEST_TYPES = [
   APP_INFO_TYPE, ZOME_CALL_TYPE, ACTIVATE_APP_TYPE, ATTACH_APP_INTERFACE_TYPE, DEACTIVATE_APP_TYPE, DUMP_TYPE, 
-  GENERATE_AGENT_PUB_KEY_TYPE, INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APP_IDS_TYPE
+  GENERATE_AGENT_PUB_KEY_TYPE, INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APP_IDS_TYPE, NEXT_TYPE
 ]
+
+const NEXT_RESPONSE_KEY = generateResponseKey(NEXT_TYPE, {})
 
 class MockHolochainServer {
   constructor(appPort, adminPort) {
     this.appPort = appPort
     this.adminPort = adminPort
-    this.responseQueues = {}
+    this.clearResponses()
 
     if (appPort) {
       this.appWss = new WebSocket.Server({ port: appPort })
@@ -50,6 +56,10 @@ class MockHolochainServer {
     }
   }
 
+  next (response) {
+    this.once(NEXT_TYPE, {}, response)
+  }
+
   once (type, data, response) {
     if (!REQUEST_TYPES.includes(type)) {
       throw new Error (`Unknown request type: ${type}`)
@@ -65,7 +75,9 @@ class MockHolochainServer {
   }
 
   clearResponses () {
-    this.responseQueues = {}
+    this.responseQueues = {
+      next: []
+    }
   }
 
   close () {
@@ -83,13 +95,20 @@ class MockHolochainServer {
     const request = msgpack.decode(decoded.data)
     const { type, data } = request 
   
-    const responseKey = generateResponseKey(type, data)
-  
+    let responseKey
+
+    // if there are responses in the 'next' queue, we use those and ignore the specific type and data of the request
+    if (!_.isEmpty(this.responseQueues[NEXT_RESPONSE_KEY])) {
+      responseKey = NEXT_RESPONSE_KEY
+    } else {
+      responseKey = generateResponseKey(type, data)
+    }
+
     if (!this.responseQueues[responseKey]) {
       throw new Error(`No more responses for: ${responseKey}`)
     }
   
-    var responsePayload = this.responseQueues[responseKey].pop()
+    var responsePayload = this.responseQueues[responseKey].shift()
   
     if (type === ZOME_CALL_TYPE) {
       // there's an extra layer of encoding in the zome call responses

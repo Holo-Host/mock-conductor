@@ -1,4 +1,4 @@
-const MockHolochainServer = require('./server')
+const MockHolochainServer = require('./src/server')
 
 // 1234 is the default admin port for holochain
-const mockHolochainServer = new MockHolochainServer (8888, 1234)
+new MockHolochainServer (8888, 1234)
