@@ -1,15 +1,16 @@
 const WebSocket = require('ws')
 const msgpack = require('@msgpack/msgpack')
 const _ = require('lodash')
-const { once } = require('lodash')
 
 function generateResponseKey (type, data) {
-  return `${type}:${JSON.stringify(_.omit(data, 'payload'))}`
+  return `${type}:${JSON.stringify(_.omit(data, ['payload', 'provenance']))}`
 }
 
 // these constants can be found in holochain-conductor-api
+// AppWebsocket
 const APP_INFO_TYPE = 'app_info'
 const ZOME_CALL_TYPE = 'zome_call_invocation'
+// AdminWebsocket
 const ACTIVATE_APP_TYPE = 'activate_app'
 const ATTACH_APP_INTERFACE_TYPE = 'attach_app_interface'
 const DEACTIVATE_APP_TYPE = 'deactivate_app'
@@ -56,6 +57,10 @@ class MockHolochainServer {
     }
   }
 
+  all (response) {
+    this.allResponse = response
+  }
+
   next (response) {
     this.once(NEXT_TYPE, {}, response)
   }
@@ -75,9 +80,8 @@ class MockHolochainServer {
   }
 
   clearResponses () {
-    this.responseQueues = {
-      next: []
-    }
+    this.responseQueues = {}
+    this.allResponse = null
   }
 
   close () {
@@ -89,12 +93,10 @@ class MockHolochainServer {
     }    
   }
 
-  handleHCRequest (message, ws) {
-    const decoded = msgpack.decode(message)
-    const { id } = decoded
-    const request = msgpack.decode(decoded.data)
-    const { type, data } = request 
-  
+
+  getSavedResponse (type, data) {
+    if (this.allResponse) return this.allResponse
+
     let responseKey
 
     // if there are responses in the 'next' queue, we use those and ignore the specific type and data of the request
@@ -107,8 +109,17 @@ class MockHolochainServer {
     if (!this.responseQueues[responseKey]) {
       throw new Error(`No more responses for: ${responseKey}`)
     }
-  
-    var responsePayload = this.responseQueues[responseKey].shift()
+
+    return this.responseQueues[responseKey].shift()
+  }
+
+  handleHCRequest (message, ws) {
+    const decoded = msgpack.decode(message)
+    const { id } = decoded
+    const request = msgpack.decode(decoded.data)
+    const { type, data } = request 
+    
+    var responsePayload = this.getSavedResponse(type, data)
   
     if (type === ZOME_CALL_TYPE) {
       // there's an extra layer of encoding in the zome call responses

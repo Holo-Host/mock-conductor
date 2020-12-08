@@ -13,8 +13,26 @@ describe('server', () => {
     mockHolochainServer = new MockHolochainServer(PORT)
   })
 
+  afterEach(() => {
+    mockHolochainServer.clearResponses()
+  })
+
   afterAll(() => {
     mockHolochainServer.close()
+  })
+
+  it('returns the all response if provided', async () => {
+    const expectedResponse1 = {
+      field1: 'valuea'
+    }
+
+    mockHolochainServer.all(expectedResponse1)
+
+    const appWebsocket = await AppWebsocket.connect(socketPath)
+
+    const response1 = await appWebsocket.appInfo({})
+
+    expect(response1).toEqual(expectedResponse1)
   })
 
   it('returns two responses in the order provided to next', async () => {
@@ -77,6 +95,7 @@ describe('server', () => {
     }
 
     mockHolochainServer.once(ZOME_CALL_TYPE, callZomeData, expectedResponse)
+
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
