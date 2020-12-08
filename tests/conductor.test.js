@@ -1,24 +1,22 @@
 const { AppWebsocket, AdminWebsocket } = require('@holochain/conductor-api')
-const wait = require('waait')
-const MockHolochainServer = require('../src/server')
-const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE } = MockHolochainServer
-
+const MockHolochainConductor = require('../src/conductor')
+const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE } = MockHolochainConductor
 const PORT = 8888
 const socketPath = `ws://localhost:${PORT}`
 
-describe('server', () => {
-  var mockHolochainServer
+describe('MockHolochainConductor', () => {
+  var mockHolochainConductor
 
   beforeAll(() => {
-    mockHolochainServer = new MockHolochainServer(PORT)
+    mockHolochainConductor = new MockHolochainConductor(PORT)
   })
 
   afterEach(() => {
-    mockHolochainServer.clearResponses()
+    mockHolochainConductor.clearResponses()
   })
 
   afterAll(() => {
-    mockHolochainServer.close()
+    mockHolochainConductor.close()
   })
 
   it('returns the all response if provided', async () => {
@@ -26,7 +24,7 @@ describe('server', () => {
       field1: 'valuea'
     }
 
-    mockHolochainServer.all(expectedResponse1)
+    mockHolochainConductor.all(expectedResponse1)
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
@@ -44,8 +42,8 @@ describe('server', () => {
       field2: 'valueb'
     }
 
-    mockHolochainServer.next(expectedResponse1)
-    mockHolochainServer.next(expectedResponse2)
+    mockHolochainConductor.next(expectedResponse1)
+    mockHolochainConductor.next(expectedResponse2)
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
@@ -67,7 +65,7 @@ describe('server', () => {
     
     const expectedResponse = { cell_data: [[mockedCellId]] }
 
-    mockHolochainServer.once(APP_INFO_TYPE, appInfoData, expectedResponse)
+    mockHolochainConductor.once(APP_INFO_TYPE, appInfoData, expectedResponse)
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
@@ -94,7 +92,7 @@ describe('server', () => {
       field2: 'value2'
     }
 
-    mockHolochainServer.once(ZOME_CALL_TYPE, callZomeData, expectedResponse)
+    mockHolochainConductor.once(ZOME_CALL_TYPE, callZomeData, expectedResponse)
 
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
@@ -120,7 +118,7 @@ describe('server', () => {
       app_id: appId, cell_data: [ [ [mockedCellId], 'dna1' ] ] 
     }
 
-    mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, expectedResponse)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, expectedResponse)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
@@ -151,7 +149,7 @@ describe('server', () => {
       type: INSTALL_APP_TYPE
     }
 
-    mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, responseClosure)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, responseClosure)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
@@ -176,8 +174,8 @@ describe('server', () => {
       app_id: 2
     }
 
-    mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
-    mockHolochainServer.next(expectedResponse)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
+    mockHolochainConductor.next(expectedResponse)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
@@ -206,9 +204,9 @@ describe('server', () => {
       app_id: 3
     }
 
-    mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
-    mockHolochainServer.next(unExpectedResponse2)
-    mockHolochainServer.all(expectedResponse)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
+    mockHolochainConductor.next(unExpectedResponse2)
+    mockHolochainConductor.all(expectedResponse)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
@@ -220,7 +218,7 @@ describe('server', () => {
   it('throws an error when given an unknown type', async () => {
     const type = 'some wrong type'
 
-    expect(() => mockHolochainServer.once(type, {}, {}))
+    expect(() => mockHolochainConductor.once(type, {}, {}))
       .toThrow(`Unknown request type: ${type}`)
   })
 
@@ -234,7 +232,7 @@ describe('server', () => {
       app_id: 1 
     }
 
-    mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 

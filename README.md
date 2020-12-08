@@ -1,5 +1,4 @@
-# Mock Holochain Server README.md
-
+# Mock Holochain Conductor
 
 Javascript library for mocking the [Holochain](https://github.com/holochain/holochain) conductor. Version mumber matches corresponds with version number of the [Holochain conductor api library](https://github.com/holochain/holochain-conductor-api).
 
@@ -8,28 +7,28 @@ This module is primarily for testing code that calls the holochain conductor trh
 
 ### Instalation
 
-`npm install @holochain/mock-holochain-server --save-dev`
+`npm install @holochain/mock-holochain-conductor --save-dev`
 
 or
 
-`yarn add @holochain/mock-holochain-server --dev`
+`yarn add @holochain/mock-holochain-conductor --dev`
 
 ### Basic Usage
 `.next` will add a response to the end of the generic response queue. While there are responses in the generic response queue, each call will return the next response in the queue.
 
 ```javascript
-const MockHolochainServer = require('@holochain/mock-holochain-server')
+const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
 const { AdminWebsocket } = require('@holochain/conductor-api')
 const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainServer = new MockHolochainServer(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
   const expectedResponse = {
     field1: 'value1',
     field2: 'value2'    
   }
-  mockHolochainServer.next(expectedResponse)
+  mockHolochainConductor.next(expectedResponse)
   
   const adminWebsocket = await AppWebsocket.connect(socketPath)
   const response = await adminWebsocket.installApp({})
@@ -42,14 +41,14 @@ const PORT = 8888
 `.once` adds a response to a specific queue, specified by the call type and call data. You will only get this response if you make a call with the same arguments **and** the generic queue (see above)is empty.
 
 ```javascript
-const MockHolochainServer = require('@holochain/mock-holochain-server')
-const { INSTALL_APP_TYPE } = MockHolochainServer
+const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
+const { INSTALL_APP_TYPE } = MockHolochainConductor
 const { AdminWebsocket } = require('@holochain/conductor-api')
 const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainServer = new MockHolochainServer(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
   const expectedResponse = {
     field1: 'value1',
     field2: 'value2'    
@@ -60,7 +59,7 @@ const PORT = 8888
     app_id: 'someappid'
   }
   
-  mockHolochainServer.once(INSTALL_APP_TYPE, installAppData, expectedResponse)
+  mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, expectedResponse)
   
   const adminWebsocket = await AppWebsocket.connect(socketPath)
   const response = await adminWebsocket.installApp(installAppData)
@@ -73,14 +72,14 @@ const PORT = 8888
 `.all` adds a response that will be returned by all future calls.
 
 ```javascript
-const MockHolochainServer = require('@holochain/mock-holochain-server')
-const { INSTALL_APP_TYPE } = MockHolochainServer
+const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
+const { INSTALL_APP_TYPE } = MockHolochainConductor
 const { AdminWebsocket } = require('@holochain/conductor-api')
 const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainServer = new MockHolochainServer(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
   const expectedResponse = {
     field1: 'value1',
     field2: 'value2'    
@@ -91,7 +90,7 @@ const PORT = 8888
     app_id: 'someappid'
   }
   
-  mockHolochainServer.all(INSTALL_APP_TYPE, installAppData, expectedResponse)
+  mockHolochainConductor.all(INSTALL_APP_TYPE, installAppData, expectedResponse)
   
   const adminWebsocket = await AppWebsocket.connect(socketPath)
   const response = await adminWebsocket.installApp(installAppData)
@@ -104,14 +103,14 @@ const PORT = 8888
 `.all`, `.next` and `.once` can all take a closure as their `response` param instead of a static value. This closure is passed the type and data from the request.
 
 ```javascript
-const MockHolochainServer = require('@holochain/mock-holochain-server')
-const { INSTALL_APP_TYPE } = MockHolochainServer
+const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
+const { INSTALL_APP_TYPE } = MockHolochainConductor
 const { AdminWebsocket } = require('@holochain/conductor-api')
 const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainServer = new MockHolochainServer(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
 
   const responseClosure = ({ type, data }) => ({ 
     app_id: data.app_id + '-modified',
@@ -129,7 +128,7 @@ const PORT = 8888
     type: 'install_app'
   }
     
-  mockHolochainServer.all(INSTALL_APP_TYPE, installAppData, responseClosure)
+  mockHolochainConductor.all(INSTALL_APP_TYPE, installAppData, responseClosure)
   
   const adminWebsocket = await AppWebsocket.connect(socketPath)
   const response = await adminWebsocket.installApp(installAppData)
@@ -160,3 +159,12 @@ Closes all running websocket servers
 
 ### Custom closures: ({ type, data }) => {}
 `.all`, `.next` and `.once` can all take a closure as their `response` param instead of a static value. This closure is passed the type and data from the request. Payload and provenance are not stripped out of the `data` field here.
+
+### Type constants
+The module also exports the following constants, which correspond to specific functions of AppWebsocket and AdminWebsocket.
+```
+const {
+  APP_INFO_TYPE, ZOME_CALL_TYPE, ACTIVATE_APP_TYPE, ATTACH_APP_INTERFACE_TYPE, DEACTIVATE_APP_TYPE, DUMP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE,
+  INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APP_IDS_TYPE
+} = require('@holochain/mock-holochain-conductor')
+```

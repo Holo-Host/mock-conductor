@@ -33,7 +33,7 @@ const REQUEST_TYPES = [
 
 const NEXT_RESPONSE_KEY = generateResponseKey(NEXT_TYPE, {})
 
-class MockHolochainServer {
+class MockHolochainConductor {
   constructor(appPort, adminPort) {
     this.appPort = appPort
     this.adminPort = adminPort
@@ -154,7 +154,15 @@ class MockHolochainServer {
   }
 }
 
-module.exports = MockHolochainServer
+module.exports = MockHolochainConductor
 module.exports.APP_INFO_TYPE = APP_INFO_TYPE
 module.exports.ZOME_CALL_TYPE = ZOME_CALL_TYPE
+module.exports.ACTIVATE_APP_TYPE = ACTIVATE_APP_TYPE
+module.exports.ATTACH_APP_INTERFACE_TYPE = ATTACH_APP_INTERFACE_TYPE
+module.exports.DEACTIVATE_APP_TYPE = DEACTIVATE_APP_TYPE
+module.exports.DUMP_TYPE = DUMP_TYPE
+module.exports.GENERATE_AGENT_PUB_KEY_TYPE = GENERATE_AGENT_PUB_KEY_TYPE
 module.exports.INSTALL_APP_TYPE = INSTALL_APP_TYPE
+module.exports.LIST_DNAS_TYPE = LIST_DNAS_TYPE
+module.exports.LIST_CELL_IDS_TYPE = LIST_CELL_IDS_TYPE
+module.exports.LIST_ACTIVE_APP_IDS_TYPE = LIST_ACTIVE_APP_IDS_TYPE
