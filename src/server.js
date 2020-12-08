@@ -20,6 +20,8 @@ const INSTALL_APP_TYPE = 'install_app'
 const LIST_DNAS_TYPE = 'list_dnas'
 const LIST_CELL_IDS_TYPE = 'list_cell_ids'
 const LIST_ACTIVE_APP_IDS_TYPE = 'list_active_app_ids'
+// Error
+const ERROR_TYPE = 'error'
 
 // next type is used internally for the next queue
 const NEXT_TYPE = 'next'
@@ -93,7 +95,6 @@ class MockHolochainServer {
     }    
   }
 
-
   getSavedResponse (type, data) {
     if (this.allResponse) return this.allResponse
 
@@ -107,7 +108,7 @@ class MockHolochainServer {
     }
 
     if (!this.responseQueues[responseKey]) {
-      throw new Error(`No more responses for: ${responseKey}`)
+      
     }
 
     return this.responseQueues[responseKey].shift()
@@ -119,7 +120,18 @@ class MockHolochainServer {
     const request = msgpack.decode(decoded.data)
     const { type, data } = request 
     
-    var responsePayload = this.getSavedResponse(type, data)
+    let responseOrResponseFunc
+
+    try {
+      responseOrResponseFunc = this.getSavedResponse(type, data)
+    } catch (e) {
+      responseOrResponseFunc = {
+        type: ERROR_TYPE,
+        message: e.message
+      }
+    }
+
+    let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
   
     if (type === ZOME_CALL_TYPE) {
       // there's an extra layer of encoding in the zome call responses
@@ -138,7 +150,7 @@ class MockHolochainServer {
       data: responseData
     }
   
-    ws.send(msgpack.encode(response))
+    return ws.send(msgpack.encode(response))
   }
 }
 
