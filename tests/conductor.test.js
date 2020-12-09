@@ -222,7 +222,7 @@ describe('MockHolochainConductor', () => {
       .toThrow(`Unknown request type: ${type}`)
   })
 
-  it.skip('throws an error when there are no matching responses', async () => {
+  it.only('throws an error when there are no matching responses', async () => {
     const installAppData = {
       agent_key: 'agentKey',
       app_id: 'test-app'
@@ -236,11 +236,18 @@ describe('MockHolochainConductor', () => {
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
+    let errorMessage
+
     try {
       await adminWebsocket.generateAgentPubKey()
     } catch (e) {
-      expect(e).toMatch(`No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`)
+      errorMessage = e.message
     }
+
+    console.log('errorMessage', errorMessage)
+
+    expect(errorMessage).toMatch(`No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`)
+
   })
 
   it('clearResponses removes all saved responses', async () => {
