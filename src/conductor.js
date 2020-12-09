@@ -108,7 +108,7 @@ class MockHolochainConductor {
     }
 
     if (!this.responseQueues[responseKey]) {
-      
+      throw new Error(`No more responses for: ${responseKey}`)
     }
 
     return this.responseQueues[responseKey].shift()
@@ -120,16 +120,7 @@ class MockHolochainConductor {
     const request = msgpack.decode(decoded.data)
     const { type, data } = request 
     
-    let responseOrResponseFunc
-
-    try {
-      responseOrResponseFunc = this.getSavedResponse(type, data)
-    } catch (e) {
-      responseOrResponseFunc = {
-        type: ERROR_TYPE,
-        message: e.message
-      }
-    }
+    const responseOrResponseFunc = this.getSavedResponse(type, data)
 
     let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
   

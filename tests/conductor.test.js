@@ -222,7 +222,7 @@ describe('MockHolochainConductor', () => {
       .toThrow(`Unknown request type: ${type}`)
   })
 
-  it.only('throws an error when there are no matching responses', async () => {
+  it.skip('throws an error when there are no matching responses', async () => {
     const installAppData = {
       agent_key: 'agentKey',
       app_id: 'test-app'
@@ -247,9 +247,37 @@ describe('MockHolochainConductor', () => {
     console.log('errorMessage', errorMessage)
 
     expect(errorMessage).toMatch(`No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`)
-
   })
 
-  it('clearResponses removes all saved responses', async () => {
+  it.skip('clearResponses removes all saved responses', async () => {
+    const installAppData = {
+      agent_key: 'agentKey',
+      app_id: 'test-app'
+    }
+
+    const unUsedResponse = { 
+      app_id: 1 
+    }
+
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unUsedResponse)
+    mockHolochainConductor.next(unUsedResponse)
+    mockHolochainConductor.all(unUsedResponse)
+
+    mockHolochainConductor.clearResponses()
+
+    const adminWebsocket = await AdminWebsocket.connect(socketPath)
+
+    let errorMessage
+
+    try {
+      await adminWebsocket.generateAgentPubKey()
+    } catch (e) {
+      errorMessage = e.message
+    }
+
+    console.log('errorMessage', errorMessage)
+
+    expect(errorMessage).toMatch(`No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`)
+
   })
 })
