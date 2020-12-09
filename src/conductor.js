@@ -120,7 +120,16 @@ class MockHolochainConductor {
     const request = msgpack.decode(decoded.data)
     const { type, data } = request 
     
-    const responseOrResponseFunc = this.getSavedResponse(type, data)
+    let responseOrResponseFunc
+
+    try {
+      responseOrResponseFunc = this.getSavedResponse(type, data)
+    } catch (e) {
+      responseOrResponseFunc = {
+        type: ERROR_TYPE,
+        message: e.message
+      }
+    }
 
     let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
   
@@ -157,3 +166,4 @@ module.exports.INSTALL_APP_TYPE = INSTALL_APP_TYPE
 module.exports.LIST_DNAS_TYPE = LIST_DNAS_TYPE
 module.exports.LIST_CELL_IDS_TYPE = LIST_CELL_IDS_TYPE
 module.exports.LIST_ACTIVE_APP_IDS_TYPE = LIST_ACTIVE_APP_IDS_TYPE
+module.exports.ERROR_TYPE = ERROR_TYPE

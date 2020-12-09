@@ -1,6 +1,6 @@
 const { AppWebsocket, AdminWebsocket } = require('@holochain/conductor-api')
 const MockHolochainConductor = require('../src/conductor')
-const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE } = MockHolochainConductor
+const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE, ERROR_TYPE } = MockHolochainConductor
 const PORT = 8888
 const socketPath = `ws://localhost:${PORT}`
 
@@ -222,7 +222,7 @@ describe('MockHolochainConductor', () => {
       .toThrow(`Unknown request type: ${type}`)
   })
 
-  it.skip('throws an error when there are no matching responses', async () => {
+  it('throws an error when there are no matching responses', async () => {
     const installAppData = {
       agent_key: 'agentKey',
       app_id: 'test-app'
@@ -236,20 +236,15 @@ describe('MockHolochainConductor', () => {
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
-    let errorMessage
+    const result = await adminWebsocket.generateAgentPubKey()
 
-    try {
-      await adminWebsocket.generateAgentPubKey()
-    } catch (e) {
-      errorMessage = e.message
-    }
-
-    console.log('errorMessage', errorMessage)
-
-    expect(errorMessage).toMatch(`No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`)
+    expect(result).toEqual({
+      type: ERROR_TYPE,
+      message: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
+    })
   })
 
-  it.skip('clearResponses removes all saved responses', async () => {
+  it('clearResponses removes all saved responses', async () => {
     const installAppData = {
       agent_key: 'agentKey',
       app_id: 'test-app'
@@ -267,17 +262,11 @@ describe('MockHolochainConductor', () => {
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
-    let errorMessage
+    const result = await adminWebsocket.generateAgentPubKey()
 
-    try {
-      await adminWebsocket.generateAgentPubKey()
-    } catch (e) {
-      errorMessage = e.message
-    }
-
-    console.log('errorMessage', errorMessage)
-
-    expect(errorMessage).toMatch(`No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`)
-
+    expect(result).toEqual({
+      type: ERROR_TYPE,
+      message: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
+    })
   })
 })
