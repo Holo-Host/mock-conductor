@@ -1,6 +1,6 @@
 # Mock Holochain Conductor
 
-Javascript library for mocking the [Holochain](https://github.com/holochain/holochain) conductor. Version mumber matches corresponds with version number of the [Holochain conductor api library](https://github.com/holochain/holochain-conductor-api).
+Javascript library for mocking the [Holochain](https://github.com/holochain/holochain) conductor.
 
 ## Overview
 This module is primarily for testing code that calls the holochain conductor through the holochain conductor API.
