@@ -59,8 +59,8 @@ class MockHolochainConductor {
     }
   }
 
-  all (response) {
-    this.allResponse = response
+  any (response) {
+    this.anyResponse = response
   }
 
   next (response) {
@@ -83,7 +83,7 @@ class MockHolochainConductor {
 
   clearResponses () {
     this.responseQueues = {}
-    this.allResponse = null
+    this.anyResponse = null
   }
 
   close () {
@@ -96,8 +96,6 @@ class MockHolochainConductor {
   }
 
   getSavedResponse (type, data) {
-    if (this.allResponse) return this.allResponse
-
     let responseKey
 
     // if there are responses in the 'next' queue, we use those and ignore the specific type and data of the request
@@ -108,6 +106,8 @@ class MockHolochainConductor {
     }
 
     if (!this.responseQueues[responseKey]) {
+      if (this.anyResponse) return this.anyResponse
+
       throw new Error(`No more responses for: ${responseKey}`)
     }
 

@@ -1,5 +1,5 @@
 const { AppWebsocket, AdminWebsocket } = require('@holochain/conductor-api')
-const MockHolochainConductor = require('../src/conductor')
+const MockHolochainConductor = require('../src/index')
 const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE, ERROR_TYPE } = MockHolochainConductor
 const PORT = 8888
 const socketPath = `ws://localhost:${PORT}`
@@ -19,12 +19,12 @@ describe('MockHolochainConductor', () => {
     mockHolochainConductor.close()
   })
 
-  it('returns the all response if provided', async () => {
+  it('returns the any response if provided', async () => {
     const expectedResponse1 = {
       field1: 'valuea'
     }
 
-    mockHolochainConductor.all(expectedResponse1)
+    mockHolochainConductor.any(expectedResponse1)
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
@@ -158,7 +158,7 @@ describe('MockHolochainConductor', () => {
     expect(installAppResult).toEqual(expectedResponse)
   })
 
-  it('prioritizes `next` over `once` responses', async () => {
+  it('prioritizes `once` over `any` responses', async () => {
     const appId = 'test-app'
 
     const installAppData = {
@@ -166,25 +166,28 @@ describe('MockHolochainConductor', () => {
       app_id: appId  
     }
 
-    const expectedResponse = { 
+    const expectedOnceResponse = { 
       app_id: 1 
     }
 
-    const unExpectedResponse = { 
-      app_id: 2
+    const expectedAnyResponse = { 
+      app_id: 2 
     }
 
-    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
-    mockHolochainConductor.next(expectedResponse)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, expectedOnceResponse)
+    mockHolochainConductor.any(expectedAnyResponse)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
     const installAppResult = await adminWebsocket.installApp(installAppData)
 
-    expect(installAppResult).toEqual(expectedResponse)
+    expect(installAppResult).toEqual(expectedOnceResponse)
+
+    const generateAgentPubKeyResult =  await adminWebsocket.generateAgentPubKey()
+    expect(generateAgentPubKeyResult).toEqual(expectedAnyResponse)    
   })
 
-  it('prioritizes `all` over `next` and `once` responses', async () => {
+  it('prioritizes `next` over `once` and `any` responses', async () => {
     const appId = 'test-app'
 
     const installAppData = {
@@ -192,11 +195,11 @@ describe('MockHolochainConductor', () => {
       app_id: appId  
     }
 
-    const unExpectedResponse = { 
+    const unExpectedOnceResponse = { 
       app_id: 1 
     }
 
-    const unExpectedResponse2 = { 
+    const unExpectedAnyResponse = { 
       app_id: 2
     }
 
@@ -204,9 +207,9 @@ describe('MockHolochainConductor', () => {
       app_id: 3
     }
 
-    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unExpectedResponse)
-    mockHolochainConductor.next(unExpectedResponse2)
-    mockHolochainConductor.all(expectedResponse)
+    mockHolochainConductor.next(expectedResponse)
+    mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unExpectedOnceResponse)
+    mockHolochainConductor.any(unExpectedAnyResponse)
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
@@ -256,7 +259,7 @@ describe('MockHolochainConductor', () => {
 
     mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, unUsedResponse)
     mockHolochainConductor.next(unUsedResponse)
-    mockHolochainConductor.all(unUsedResponse)
+    mockHolochainConductor.any(unUsedResponse)
 
     mockHolochainConductor.clearResponses()
 

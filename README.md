@@ -1,6 +1,13 @@
+[![](https://img.shields.io/npm/v/@holo-host/mock-conductor/latest?style=flat-square)](http://npmjs.com/package/@holo-host/mock-conductor)
+[![](https://img.shields.io/github/workflow/status/holo-host/mock-conductor/Node.js%20CI/main?style=flat-square&label=main)](https://github.com/holo-host/mock-conductor)
+
 # Mock Holochain Conductor
 
 Javascript library for mocking the [Holochain](https://github.com/holochain/holochain) conductor.
+
+[![](https://img.shields.io/github/issues-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/issues)
+[![](https://img.shields.io/github/issues-closed-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/issues?q=is%3Aissue+is%3Aclosed)
+[![](https://img.shields.io/github/issues-pr-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/pulls)
 
 ## Overview
 This module is primarily for testing code that calls the holochain conductor through the holochain conductor API.
@@ -30,7 +37,7 @@ const PORT = 8888
   }
   mockHolochainConductor.next(expectedResponse)
   
-  const adminWebsocket = await AppWebsocket.connect(socketPath)
+  const adminWebsocket = await AppWebsocket.connect(`ws://localhost:${PORT}`)
   const response = await adminWebsocket.installApp({})
   expect(response).toEqual(expectedResponse)
 })()
@@ -38,7 +45,7 @@ const PORT = 8888
 ```
 
 ### Creating responses for specific calls
-`.once` adds a response to a specific queue, specified by the call type and call data. You will only get this response if you make a call with the same arguments **and** the generic queue (see above)is empty.
+`.once` adds a response to a specific queue, specified by the call type and call data. You will only get this response if you make a call with the same arguments **and** the generic queue (see above) is empty.
 
 ```javascript
 const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
@@ -61,7 +68,7 @@ const PORT = 8888
   
   mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, expectedResponse)
   
-  const adminWebsocket = await AppWebsocket.connect(socketPath)
+  const adminWebsocket = await AppWebsocket.connect(`ws://localhost:${PORT}`)
   const response = await adminWebsocket.installApp(installAppData)
   expect(response).toEqual(expectedResponse)
 })()
@@ -69,7 +76,7 @@ const PORT = 8888
 ```
 
 ### Creating a constant response for all calls
-`.all` adds a response that will be returned by all future calls.
+`.any` adds a response that will be returned by all future calls that are not otherwise matched.
 
 ```javascript
 const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
@@ -90,9 +97,9 @@ const PORT = 8888
     app_id: 'someappid'
   }
   
-  mockHolochainConductor.all(INSTALL_APP_TYPE, installAppData, expectedResponse)
+  mockHolochainConductor.any(expectedResponse)
   
-  const adminWebsocket = await AppWebsocket.connect(socketPath)
+  const adminWebsocket = await AppWebsocket.connect(`ws://localhost:${PORT}`)
   const response = await adminWebsocket.installApp(installAppData)
   expect(response).toEqual(expectedResponse)
 })()
@@ -100,7 +107,7 @@ const PORT = 8888
 ```
 
 ### Calling a closure to dynamically generate a response
-`.all`, `.next` and `.once` can all take a closure as their `response` param instead of a static value. This closure is passed the type and data from the request.
+`.any`, `.next` and `.once` can all take a closure as their `response` param instead of a static value. This closure is passed the type and data from the request.
 
 ```javascript
 const MockHolochainConductor = require('@holochain/mock-holochain-conductor')
@@ -128,9 +135,9 @@ const PORT = 8888
     type: 'install_app'
   }
     
-  mockHolochainConductor.all(INSTALL_APP_TYPE, installAppData, responseClosure)
+  mockHolochainConductor.once(INSTALL_APP_TYPE, installAppData, responseClosure)
   
-  const adminWebsocket = await AppWebsocket.connect(socketPath)
+  const adminWebsocket = await AppWebsocket.connect(`ws://localhost:${PORT}`)
   const response = await adminWebsocket.installApp(installAppData)
   expect(response).toEqual(expectedResponse)
 })()
@@ -148,8 +155,8 @@ Adds a response to the response queue corresponding with `type` and `data`. The 
 ### .next(response)
 Adds a response to the next queue. This front response in this queue will be returned the next time any call is made.
 
-### .all(response)
-Adds an overriding constant response. This response will be returned any time a call is made.
+### .any(response)
+Adds a catchall constant response. This response will be returned any time a call is made that does not already have a response in the response queue.
 
 ### .clearResponses()
 Clears all queues and the `all` response. 

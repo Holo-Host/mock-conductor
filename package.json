@@ -1,8 +1,8 @@
 {
-  "name": "mock-holochain-conductor",
+  "name": "@holo-host/mock-conductor",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "jest",
     "test-watch": "jest --watchAll"
