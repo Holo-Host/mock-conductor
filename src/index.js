@@ -95,11 +95,11 @@ class MockHolochainConductor {
   }
 
   close () {
-    if (this.appWss) {
-      this.appWss.close()
-    }
     if (this.adminWss) {
       this.adminWss.close()
+    }
+    if (this.appWsss) {
+      this.appWsss.forEach(appWss => appWss.close())
     }    
   }
 
