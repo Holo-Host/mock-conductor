@@ -1,7 +1,7 @@
 const { AppWebsocket, AdminWebsocket } = require('@holochain/conductor-api')
 const MockHolochainConductor = require('../src/index')
 const { APP_INFO_TYPE, ZOME_CALL_TYPE, INSTALL_APP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE, ERROR_TYPE } = MockHolochainConductor
-const PORT = 8888
+const PORT = 6422
 const socketPath = `ws://localhost:${PORT}`
 
 describe('MockHolochainConductor', () => {
@@ -271,5 +271,33 @@ describe('MockHolochainConductor', () => {
       type: ERROR_TYPE,
       message: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
     })
+  })
+
+  it('addPort adds a new port', async () => {
+    const newPort = PORT + 1
+    const newSocketPath = `ws://localhost:${newPort}`
+
+    const expectedResponse = {
+      app_id: 1 
+    }
+
+    mockHolochainConductor.any(expectedResponse)
+
+    let errorMessage
+    try {
+      await AdminWebsocket.connect(newSocketPath)
+    } catch (e) {
+      errorMessage = e.message
+    }
+
+    expect(errorMessage).toEqual(`could not connect to holochain conductor, please check that a conductor service is running and available at ws://localhost:${newPort}`)
+
+    mockHolochainConductor.addPort(newPort)
+
+    const adminWebsocket = await AdminWebsocket.connect(newSocketPath)
+
+    const result = await adminWebsocket.generateAgentPubKey()
+
+    expect(result).toEqual(expectedResponse)
   })
 })

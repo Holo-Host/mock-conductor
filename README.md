@@ -30,7 +30,7 @@ const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(PORT)
   const expectedResponse = {
     field1: 'value1',
     field2: 'value2'    
@@ -55,7 +55,7 @@ const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(PORT)
   const expectedResponse = {
     field1: 'value1',
     field2: 'value2'    
@@ -86,7 +86,7 @@ const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(PORT)
   const expectedResponse = {
     field1: 'value1',
     field2: 'value2'    
@@ -117,7 +117,7 @@ const PORT = 8888
 
 // inside a test framework
 (async () => {
-  const mockHolochainConductor = new MockHolochainConductor(null, PORT)
+  const mockHolochainConductor = new MockHolochainConductor(PORT)
 
   const responseClosure = ({ type, data }) => ({ 
     app_id: data.app_id + '-modified',
@@ -146,7 +146,7 @@ const PORT = 8888
 
 ## API
 
-### new MockHolochainConductor(appPort, adminPort)
+### new MockHolochainConductor(adminPort, ...appPorts)
 Returns a MockHolochainConductor instance listening on the provided ports. Pass null if you don't need the port.
 
 ### .once(type, data, response)

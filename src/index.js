@@ -34,19 +34,12 @@ const REQUEST_TYPES = [
 const NEXT_RESPONSE_KEY = generateResponseKey(NEXT_TYPE, {})
 
 class MockHolochainConductor {
-  constructor(appPort, adminPort) {
-    this.appPort = appPort
+  constructor(adminPort, ...ports) {
     this.adminPort = adminPort
+    this.ports = ports
     this.clearResponses()
 
-    if (appPort) {
-      this.appWss = new WebSocket.Server({ port: appPort })
-      this.appWss.on('connection', ws => {
-        ws.on('message', message => {
-          this.handleHCRequest(message, ws)
-        })
-      })
-    }
+    ports.forEach(port => this.addPort(port))
 
     if (adminPort) {
       this.adminWss = new WebSocket.Server({ port: adminPort })
@@ -56,6 +49,21 @@ class MockHolochainConductor {
           this.handleHCRequest(message, ws)
         })
       })
+    }
+  }
+
+  addPort (port) {
+    const appWss = new WebSocket.Server({ port })
+    appWss.on('connection', ws => {
+      ws.on('message', message => {
+        this.handleHCRequest(message, ws)
+      })
+    })
+
+    if (this.appWsss) {
+      this.appWsss.push(appWss)    
+    } else {
+      this.appWsss = [appWss]
     }
   }
 
