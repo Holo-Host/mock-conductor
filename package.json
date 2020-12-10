@@ -1,7 +1,7 @@
 {
   "name": "@holo-host/mock-conductor",
   "version": "0.1.0",
-  "description": "",
+  "description": "Javascript library for mocking the Holochain Conductor.",
   "main": "src/index.js",
   "scripts": {
     "test": "jest",
