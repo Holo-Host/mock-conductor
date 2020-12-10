@@ -154,7 +154,7 @@ Adds an overriding constant response. This response will be returned any time a 
 ### .clearResponses()
 Clears all queues and the `all` response. 
 
-### .close
+### .close()
 Closes all running websocket servers
 
 ### Custom closures: ({ type, data }) => {}
