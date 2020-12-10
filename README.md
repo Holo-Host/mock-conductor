@@ -1,9 +1,11 @@
 [![](https://img.shields.io/npm/v/@holo-host/mock-conductor/latest?style=flat-square)](http://npmjs.com/package/@holo-host/mock-conductor)
-[![](https://img.shields.io/github/workflow/status/holo-host/mock-conductor/Node.js%20CI/main?style=flat-square&label=main)](https://github.com/holo-host/mock-conductor)
+[![](https://img.shields.io/github/workflow/status/holo-host/mock-conductor/Node.js%20CI/master?style=flat-square&label=master)](https://github.com/holo-host/mock-conductor)
 
 # Mock Holochain Conductor
 
 Javascript library for mocking the [Holochain](https://github.com/holochain/holochain) conductor.
+
+This works with [holochain-conductor-api version 0.0.1-dev.14](https://github.com/holochain/holochain-conductor-api/releases/tag/v0.0.1-dev.14)
 
 [![](https://img.shields.io/github/issues-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/issues)
 [![](https://img.shields.io/github/issues-closed-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/issues?q=is%3Aissue+is%3Aclosed)
