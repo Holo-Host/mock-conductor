@@ -300,4 +300,36 @@ describe('MockHolochainConductor', () => {
 
     expect(result).toEqual(expectedResponse)
   })
+
+  it("ignores 'payload', 'provenance', 'args' and 'cap' keys in data when matching responses", async () => {
+    const mockedCellId = [
+      'hash', 'agentKey'
+    ]
+
+    const appId = 'test-app'  
+
+    const appInfoData = { 
+      app_id: appId, 
+      payload: '1', 
+      provenance: '2',
+      args: '3',
+      cap: '4'
+    }
+    
+    const expectedResponse = { cell_data: [[mockedCellId]] }
+
+    mockHolochainConductor.once(APP_INFO_TYPE, appInfoData, expectedResponse)
+
+    const appWebsocket = await AppWebsocket.connect(socketPath)
+
+    const appInfo = await appWebsocket.appInfo({ 
+      app_id: appId,
+      payload: 'not 1', 
+      provenance: 'not 2',
+      args: 'not 3',
+      cap: 'not 4'
+    })
+
+    expect(appInfo.cell_data[0][0]).toEqual(mockedCellId)
+  })
 })

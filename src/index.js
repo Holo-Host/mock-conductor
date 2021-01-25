@@ -3,7 +3,7 @@ const msgpack = require('@msgpack/msgpack')
 const _ = require('lodash')
 
 function generateResponseKey (type, data) {
-  return `${type}:${JSON.stringify(_.omit(data, ['payload', 'provenance']))}`
+  return `${type}:${JSON.stringify(_.omit(data, ['payload', 'provenance', 'args', 'cap']))}`
 }
 
 // these constants can be found in holochain-conductor-api
