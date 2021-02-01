@@ -333,21 +333,43 @@ describe('MockHolochainConductor', () => {
     expect(appInfo.cell_data[0][0]).toEqual(mockedCellId)
   })
 
-  it('can emit signals on app interfaces', async () => {
+  it('can broadcast signals on app interfaces', async () => {
     const port1 = PORT + 1
     const socketPath1 = `ws://localhost:${port1}`
 
     const port2 = PORT + 2
     const socketPath2 = `ws://localhost:${port2}`
 
-    expect(mockHolochainConductor.emitAppSignal(0, undefined)).toThrow('index out of bunds')
+    // Test emitting a signal with no app interface connections
+    await mockHolochainConductor.broadcastAppSignal(1)
 
-    mockHolochainConductor.addPort(newPort)
+    mockHolochainConductor.addPort(port1)
 
-    const signals = []
+    const signalPromise1 = new Promise(resolve => AppWebsocket.connect(socketPath1, signal => resolve(signal)))
 
-    await AppWebsocket.connect(newSocketPath, signal => {})
+    await mockHolochainConductor.broadcastAppSignal(2)
 
-    expect(result).toEqual(expectedResponse)
+    expect(await signalPromise1).toEqual(2)
+
+    await mockHolochainConductor.broadcastAppSignal(3)
+
+    expect(await signalPromise1).toEqual(3)
+
+    const signalPromise2 = new Promise(resolve => AppWebsocket.connect(socketPath2, signal => resolve(signal)))
+
+    // Test emitting a signal across two different connections on two different ports
+    await mockHolochainConductor.broadcastAppSignal(4)
+
+    expect(await signalPromise1).toEqual(4)
+    expect(await signalPromise2).toEqual(4)
+
+    const signalPromise3 = new Promise(resolve => AppWebsocket.connect(socketPath3, signal => resolve(signal)))
+
+      // Test emitting a signal across three different connections on two different ports
+    await mockHolochainConductor.broadcastAppSignal(5)
+
+    expect(await signalPromise1).toEqual(5)
+    expect(await signalPromise2).toEqual(5)
+    expect(await signalPromise3).toEqual(5)
   })
 })
