@@ -13,10 +13,11 @@ describe('MockHolochainConductor', () => {
 
   afterEach(() => {
     mockHolochainConductor.clearResponses()
+    return mockHolochainConductor.closeApps()
   })
 
   afterAll(() => {
-    mockHolochainConductor.close()
+    return mockHolochainConductor.close()
   })
 
   it('returns the any response if provided', async () => {
@@ -345,31 +346,26 @@ describe('MockHolochainConductor', () => {
 
     mockHolochainConductor.addPort(port1)
 
-    const signalPromise1 = new Promise(resolve => AppWebsocket.connect(socketPath1, signal => resolve(signal)))
+    let signalPromise1Resolve
+    const signalPromise1 = new Promise(resolve => signalPromise1Resolve = resolve)
+    await AppWebsocket.connect(socketPath1, signal => signalPromise1Resolve(signal))
 
     await mockHolochainConductor.broadcastAppSignal(2)
+    console.log("so far so good1")
 
     expect(await signalPromise1).toEqual(2)
+    console.log("so far so good2")
 
     await mockHolochainConductor.broadcastAppSignal(3)
 
     expect(await signalPromise1).toEqual(3)
 
-    const signalPromise2 = new Promise(resolve => AppWebsocket.connect(socketPath2, signal => resolve(signal)))
+    await AppWebsocket.connect(socketPath2, signal => signalPromise2Resolve(signal))
 
     // Test emitting a signal across two different connections on two different ports
     await mockHolochainConductor.broadcastAppSignal(4)
 
     expect(await signalPromise1).toEqual(4)
     expect(await signalPromise2).toEqual(4)
-
-    const signalPromise3 = new Promise(resolve => AppWebsocket.connect(socketPath3, signal => resolve(signal)))
-
-      // Test emitting a signal across three different connections on two different ports
-    await mockHolochainConductor.broadcastAppSignal(5)
-
-    expect(await signalPromise1).toEqual(5)
-    expect(await signalPromise2).toEqual(5)
-    expect(await signalPromise3).toEqual(5)
   })
 })

@@ -92,13 +92,19 @@ class MockHolochainConductor {
     this.anyResponse = null
   }
 
-  close () {
+  async close () {
+    const promises = [this.closeApps()]
     if (this.adminWss) {
-      this.adminWss.close()
+      promises.push(new Promise(resolve => this.adminWss.close(resolve)))
     }
+    await Promise.all(promises)
+  }
+
+  async closeApps () {
     if (this.appWssList) {
-      this.appWssList.forEach(appWss => appWss.close())
-    }    
+      await Promise.all(this.appWssList.map(appWss => new Promise(resolve => appWss.close(resolve))))
+      this.appWssList = []
+    }
   }
 
   getSavedResponse (type, data) {
@@ -159,17 +165,20 @@ class MockHolochainConductor {
     ws.send(msgpack.encode(response))
   }
 
-  broadcastAppSignal (signalData) {
+  async broadcastAppSignal (cellId, signalData) {
     const message = msgpack.encode({
       type: 'Signal',
       data: msgpack.encode({
-        signalData
+        App: [cellId, msgpack.encode(signalData)]
       })
     })
 
-    return Promise.all(this.appWssList.map(
-      appWss => Promise.all(Array.from(appWss.clients.keys(),
-        appWs => new Promise(resolve => appWs.send(message, undefined, resolve))))))
+    await Promise.all(this.appWssList.map(
+      appWss => {
+        console.log(Array.from(appWss.clients.keys()))
+        return Promise.all(Array.from(appWss.clients.keys(),
+        appWs => new Promise(resolve => appWs.send(message, undefined, resolve))))}
+        ))
   }
 }
 
