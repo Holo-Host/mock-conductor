@@ -346,13 +346,15 @@ describe('MockHolochainConductor', () => {
 
     mockHolochainConductor.addPort(port1)
 
-    let signalPromise1Resolve
-    const signalPromise1 = new Promise(resolve => signalPromise1Resolve = resolve)
-    await AppWebsocket.connect(socketPath1, signal => signalPromise1Resolve(signal))
+    let onSignal1
+    let signalPromise1 = new Promise(resolve => onSignal1 = resolve)
+    await AppWebsocket.connect(socketPath1, signal => onSignal1(signal))
 
     await mockHolochainConductor.broadcastAppSignal("cellId2", "payload2")
 
     expect(await signalPromise1).toEqual({"data": {"cellId": "cellId2", "payload": "payload2"}, "type": "Signal"})
+
+    signalPromise1 = new Promise(resolve => onSignal1 = resolve)
 
     await mockHolochainConductor.broadcastAppSignal("cellId3", "payload3")
 
@@ -360,9 +362,10 @@ describe('MockHolochainConductor', () => {
 
     mockHolochainConductor.addPort(port2)
 
-    let signalPromise2Resolve
-    const signalPromise2 = new Promise(resolve => signalPromise2Resolve = resolve)
-    await AppWebsocket.connect(socketPath2, signal => signalPromise2Resolve(signal))
+    signalPromise1 = new Promise(resolve => onSignal1 = resolve)
+    let onSignal2
+    const signalPromise2 = new Promise(resolve => onSignal2 = resolve)
+    await AppWebsocket.connect(socketPath2, signal => onSignal2(signal))
 
     // Test emitting a signal across two different connections on two different ports
     await mockHolochainConductor.broadcastAppSignal("cellId4", "payload4")
