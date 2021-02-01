@@ -168,7 +168,7 @@ class MockHolochainConductor {
     })
 
     return Promise.all(this.appWssList.map(
-      appWss => Promise.all(appWss.clients.keys().map(
+      appWss => Promise.all(Array.from(appWss.clients.keys(),
         appWs => new Promise(resolve => appWs.send(message, undefined, resolve))))))
   }
 }
