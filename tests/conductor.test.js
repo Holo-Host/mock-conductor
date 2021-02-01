@@ -342,7 +342,7 @@ describe('MockHolochainConductor', () => {
     const socketPath2 = `ws://localhost:${port2}`
 
     // Test emitting a signal with no app interface connections
-    await mockHolochainConductor.broadcastAppSignal(1)
+    await mockHolochainConductor.broadcastAppSignal("cellId1", "payload1")
 
     mockHolochainConductor.addPort(port1)
 
@@ -350,22 +350,24 @@ describe('MockHolochainConductor', () => {
     const signalPromise1 = new Promise(resolve => signalPromise1Resolve = resolve)
     await AppWebsocket.connect(socketPath1, signal => signalPromise1Resolve(signal))
 
-    await mockHolochainConductor.broadcastAppSignal(2)
-    console.log("so far so good1")
+    await mockHolochainConductor.broadcastAppSignal("cellId2", "payload2")
 
-    expect(await signalPromise1).toEqual(2)
-    console.log("so far so good2")
+    expect(await signalPromise1).toEqual({"data": {"cellId": "cellId2", "payload": "payload2"}, "type": "Signal"})
 
-    await mockHolochainConductor.broadcastAppSignal(3)
+    await mockHolochainConductor.broadcastAppSignal("cellId3", "payload3")
 
-    expect(await signalPromise1).toEqual(3)
+    expect(await signalPromise1).toEqual({"data": {"cellId": "cellId3", "payload": "payload3"}, "type": "Signal"})
 
+    mockHolochainConductor.addPort(port2)
+
+    let signalPromise2Resolve
+    const signalPromise2 = new Promise(resolve => signalPromise2Resolve = resolve)
     await AppWebsocket.connect(socketPath2, signal => signalPromise2Resolve(signal))
 
     // Test emitting a signal across two different connections on two different ports
-    await mockHolochainConductor.broadcastAppSignal(4)
+    await mockHolochainConductor.broadcastAppSignal("cellId4", "payload4")
 
-    expect(await signalPromise1).toEqual(4)
-    expect(await signalPromise2).toEqual(4)
+    expect(await signalPromise1).toEqual({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
+    expect(await signalPromise2).toEqual({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
   })
 })
