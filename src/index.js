@@ -173,6 +173,10 @@ class MockHolochainConductor {
       })
     })
 
+    if (this.appWssList.length === 0) {
+      throw new Error("broadcastAppSignal called with no app interfaces attached")
+    }
+
     await Promise.all(this.appWssList.map(
       appWss => Promise.all(Array.from(appWss.clients.keys(),
         appWs => new Promise(resolve => appWs.send(message, undefined, resolve))))))

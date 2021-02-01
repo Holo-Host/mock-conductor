@@ -342,7 +342,7 @@ describe('MockHolochainConductor', () => {
     const socketPath2 = `ws://localhost:${port2}`
 
     // Test emitting a signal with no app interface connections
-    await mockHolochainConductor.broadcastAppSignal("cellId1", "payload1")
+    await expect(mockHolochainConductor.broadcastAppSignal("cellId1", "payload1")).rejects.toThrow("broadcastAppSignal called with no app interfaces attached")
 
     mockHolochainConductor.addPort(port1)
 
