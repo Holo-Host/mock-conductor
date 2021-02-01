@@ -346,31 +346,40 @@ describe('MockHolochainConductor', () => {
 
     mockHolochainConductor.addPort(port1)
 
-    let onSignal1
-    let signalPromise1 = new Promise(resolve => onSignal1 = resolve)
+    let signalResolve1
+    let signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
+    const onSignal1 = jest.fn(signal => signalResolve1())
     await AppWebsocket.connect(socketPath1, signal => onSignal1(signal))
 
     await mockHolochainConductor.broadcastAppSignal("cellId2", "payload2")
 
-    expect(await signalPromise1).toEqual({"data": {"cellId": "cellId2", "payload": "payload2"}, "type": "Signal"})
+    await signalPromise1
+    expect(onSignal1).toHaveBeenLastCalledWith({"data": {"cellId": "cellId2", "payload": "payload2"}, "type": "Signal"})
 
-    signalPromise1 = new Promise(resolve => onSignal1 = resolve)
+    signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
 
     await mockHolochainConductor.broadcastAppSignal("cellId3", "payload3")
-
-    expect(await signalPromise1).toEqual({"data": {"cellId": "cellId3", "payload": "payload3"}, "type": "Signal"})
+    
+    await signalPromise1
+    expect(onSignal1).toHaveBeenLastCalledWith({"data": {"cellId": "cellId3", "payload": "payload3"}, "type": "Signal"})
 
     mockHolochainConductor.addPort(port2)
 
-    signalPromise1 = new Promise(resolve => onSignal1 = resolve)
-    let onSignal2
-    const signalPromise2 = new Promise(resolve => onSignal2 = resolve)
+    signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
+    let signalResolve2
+    const signalPromise2 = new Promise(resolve => signalResolve2 = resolve)
+    const onSignal2 = jest.fn(signal => signalResolve2())
     await AppWebsocket.connect(socketPath2, signal => onSignal2(signal))
 
     // Test emitting a signal across two different connections on two different ports
     await mockHolochainConductor.broadcastAppSignal("cellId4", "payload4")
 
-    expect(await signalPromise1).toEqual({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
-    expect(await signalPromise2).toEqual({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
+    await signalPromise1
+    expect(onSignal1).toHaveBeenLastCalledWith({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
+    await signalPromise2
+    expect(onSignal2).toHaveBeenLastCalledWith({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
+
+    expect(onSignal1).toHaveBeenCalledTimes(3)
+    expect(onSignal2).toHaveBeenCalledTimes(1)
   })
 })
