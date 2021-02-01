@@ -332,4 +332,22 @@ describe('MockHolochainConductor', () => {
 
     expect(appInfo.cell_data[0][0]).toEqual(mockedCellId)
   })
+
+  it('can emit signals on app interfaces', async () => {
+    const port1 = PORT + 1
+    const socketPath1 = `ws://localhost:${port1}`
+
+    const port2 = PORT + 2
+    const socketPath2 = `ws://localhost:${port2}`
+
+    expect(mockHolochainConductor.emitAppSignal(0, undefined)).toThrow('index out of bunds')
+
+    mockHolochainConductor.addPort(newPort)
+
+    const signals = []
+
+    await AppWebsocket.connect(newSocketPath, signal => {})
+
+    expect(result).toEqual(expectedResponse)
+  })
 })

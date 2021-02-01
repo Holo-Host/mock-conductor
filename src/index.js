@@ -39,6 +39,7 @@ class MockHolochainConductor {
     this.ports = ports
     this.clearResponses()
 
+    this.appWssList = []
     ports.forEach(port => this.addPort(port))
 
     if (adminPort) {
@@ -53,18 +54,15 @@ class MockHolochainConductor {
   }
 
   addPort (port) {
-    const appWss = new WebSocket.Server({ port })
+    const appWss = new WebSocket.Server({ port, clientTracking: true })
+
+    this.appWssList.push(appWss)
+
     appWss.on('connection', ws => {
       ws.on('message', message => {
         this.handleHCRequest(message, ws)
       })
     })
-
-    if (this.appWsss) {
-      this.appWsss.push(appWss)    
-    } else {
-      this.appWsss = [appWss]
-    }
   }
 
   any (response) {
@@ -98,8 +96,8 @@ class MockHolochainConductor {
     if (this.adminWss) {
       this.adminWss.close()
     }
-    if (this.appWsss) {
-      this.appWsss.forEach(appWss => appWss.close())
+    if (this.appWssList) {
+      this.appWssList.forEach(appWss => appWss.close())
     }    
   }
 
@@ -158,7 +156,20 @@ class MockHolochainConductor {
       data: responseData
     }
   
-    return ws.send(msgpack.encode(response))
+    ws.send(msgpack.encode(response))
+  }
+
+  broadcastAppSignal (signalData) {
+    const message = msgpack.encode({
+      type: 'Signal',
+      data: msgpack.encode({
+        signalData
+      })
+    })
+    
+    return Promise.all(this.appWssList.map(
+      appWss => Promise.all(appWss.clients.map(
+        appWs => new Promise(resolve => appWs.send(message, undefined, resolve))))))
   }
 }
 
