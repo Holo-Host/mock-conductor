@@ -39,6 +39,7 @@ class MockHolochainConductor {
     this.ports = ports
     this.clearResponses()
 
+    this.appWssList = []
     ports.forEach(port => this.addPort(port))
 
     if (adminPort) {
@@ -53,18 +54,15 @@ class MockHolochainConductor {
   }
 
   addPort (port) {
-    const appWss = new WebSocket.Server({ port })
+    const appWss = new WebSocket.Server({ port, clientTracking: true })
+
+    this.appWssList.push(appWss)
+
     appWss.on('connection', ws => {
       ws.on('message', message => {
         this.handleHCRequest(message, ws)
       })
     })
-
-    if (this.appWsss) {
-      this.appWsss.push(appWss)    
-    } else {
-      this.appWsss = [appWss]
-    }
   }
 
   any (response) {
@@ -94,13 +92,19 @@ class MockHolochainConductor {
     this.anyResponse = null
   }
 
-  close () {
+  async close () {
+    const promises = [this.closeApps()]
     if (this.adminWss) {
-      this.adminWss.close()
+      promises.push(new Promise(resolve => this.adminWss.close(resolve)))
     }
-    if (this.appWsss) {
-      this.appWsss.forEach(appWss => appWss.close())
-    }    
+    await Promise.all(promises)
+  }
+
+  async closeApps () {
+    if (this.appWssList) {
+      await Promise.all(this.appWssList.map(appWss => new Promise(resolve => appWss.close(resolve))))
+      this.appWssList = []
+    }
   }
 
   getSavedResponse (type, data) {
@@ -158,7 +162,24 @@ class MockHolochainConductor {
       data: responseData
     }
   
-    return ws.send(msgpack.encode(response))
+    ws.send(msgpack.encode(response))
+  }
+
+  async broadcastAppSignal (cellId, signalData) {
+    const message = msgpack.encode({
+      type: 'Signal',
+      data: msgpack.encode({
+        App: [cellId, msgpack.encode(signalData)]
+      })
+    })
+
+    if (this.appWssList.length === 0) {
+      throw new Error("broadcastAppSignal called with no app interfaces attached")
+    }
+
+    await Promise.all(this.appWssList.map(
+      appWss => Promise.all(Array.from(appWss.clients.keys(),
+        appWs => new Promise(resolve => appWs.send(message, undefined, resolve))))))
   }
 }
 
