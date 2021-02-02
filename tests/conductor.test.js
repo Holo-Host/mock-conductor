@@ -344,11 +344,12 @@ describe('MockHolochainConductor', () => {
     // Test emitting a signal with no app interface connections
     await expect(mockHolochainConductor.broadcastAppSignal("cellId1", "payload1")).rejects.toThrow("broadcastAppSignal called with no app interfaces attached")
 
+    // Test emitting a signal with a single app interface connection
     mockHolochainConductor.addPort(port1)
 
     let signalResolve1
     let signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
-    const onSignal1 = jest.fn(signal => signalResolve1())
+    const onSignal1 = jest.fn(() => signalResolve1())
     await AppWebsocket.connect(socketPath1, signal => onSignal1(signal))
 
     await mockHolochainConductor.broadcastAppSignal("cellId2", "payload2")
@@ -368,7 +369,7 @@ describe('MockHolochainConductor', () => {
     signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
     let signalResolve2
     const signalPromise2 = new Promise(resolve => signalResolve2 = resolve)
-    const onSignal2 = jest.fn(signal => signalResolve2())
+    const onSignal2 = jest.fn(() => signalResolve2())
     await AppWebsocket.connect(socketPath2, signal => onSignal2(signal))
 
     // Test emitting a signal across two different connections on two different ports
