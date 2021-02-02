@@ -13,10 +13,11 @@ describe('MockHolochainConductor', () => {
 
   afterEach(() => {
     mockHolochainConductor.clearResponses()
+    return mockHolochainConductor.closeApps()
   })
 
   afterAll(() => {
-    mockHolochainConductor.close()
+    return mockHolochainConductor.close()
   })
 
   it('returns the any response if provided', async () => {
@@ -299,5 +300,87 @@ describe('MockHolochainConductor', () => {
     const result = await adminWebsocket.generateAgentPubKey()
 
     expect(result).toEqual(expectedResponse)
+  })
+
+  it("ignores 'payload', 'provenance', 'args' and 'cap' keys in data when matching responses", async () => {
+    const mockedCellId = [
+      'hash', 'agentKey'
+    ]
+
+    const appId = 'test-app'  
+
+    const appInfoData = { 
+      app_id: appId, 
+      payload: '1', 
+      provenance: '2',
+      args: '3',
+      cap: '4'
+    }
+    
+    const expectedResponse = { cell_data: [[mockedCellId]] }
+
+    mockHolochainConductor.once(APP_INFO_TYPE, appInfoData, expectedResponse)
+
+    const appWebsocket = await AppWebsocket.connect(socketPath)
+
+    const appInfo = await appWebsocket.appInfo({ 
+      app_id: appId,
+      payload: 'not 1', 
+      provenance: 'not 2',
+      args: 'not 3',
+      cap: 'not 4'
+    })
+
+    expect(appInfo.cell_data[0][0]).toEqual(mockedCellId)
+  })
+
+  it('can broadcast signals on app interfaces', async () => {
+    const port1 = PORT + 1
+    const socketPath1 = `ws://localhost:${port1}`
+
+    const port2 = PORT + 2
+    const socketPath2 = `ws://localhost:${port2}`
+
+    // Test emitting a signal with no app interface connections
+    await expect(mockHolochainConductor.broadcastAppSignal("cellId1", "payload1")).rejects.toThrow("broadcastAppSignal called with no app interfaces attached")
+
+    // Test emitting a signal with a single app interface connection
+    mockHolochainConductor.addPort(port1)
+
+    let signalResolve1
+    let signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
+    const onSignal1 = jest.fn(() => signalResolve1())
+    await AppWebsocket.connect(socketPath1, signal => onSignal1(signal))
+
+    await mockHolochainConductor.broadcastAppSignal("cellId2", "payload2")
+
+    await signalPromise1
+    expect(onSignal1).toHaveBeenLastCalledWith({"data": {"cellId": "cellId2", "payload": "payload2"}, "type": "Signal"})
+
+    signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
+
+    await mockHolochainConductor.broadcastAppSignal("cellId3", "payload3")
+    
+    await signalPromise1
+    expect(onSignal1).toHaveBeenLastCalledWith({"data": {"cellId": "cellId3", "payload": "payload3"}, "type": "Signal"})
+
+    mockHolochainConductor.addPort(port2)
+
+    signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
+    let signalResolve2
+    const signalPromise2 = new Promise(resolve => signalResolve2 = resolve)
+    const onSignal2 = jest.fn(() => signalResolve2())
+    await AppWebsocket.connect(socketPath2, signal => onSignal2(signal))
+
+    // Test emitting a signal across two different connections on two different ports
+    await mockHolochainConductor.broadcastAppSignal("cellId4", "payload4")
+
+    await signalPromise1
+    expect(onSignal1).toHaveBeenLastCalledWith({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
+    await signalPromise2
+    expect(onSignal2).toHaveBeenLastCalledWith({"data": {"cellId": "cellId4", "payload": "payload4"}, "type": "Signal"})
+
+    expect(onSignal1).toHaveBeenCalledTimes(3)
+    expect(onSignal2).toHaveBeenCalledTimes(1)
   })
 })
