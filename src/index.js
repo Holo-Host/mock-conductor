@@ -146,14 +146,15 @@ class MockHolochainConductor {
     }
 
     let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
-  
-    if (type === ZOME_CALL_TYPE) {
+    const responseType = returnError ? ERROR_TYPE : type
+
+    if (responseType === ZOME_CALL_TYPE) {
       // there's an extra layer of encoding in the zome call responses
       responsePayload = msgpack.encode(responsePayload)
     }
     
     const responseData = msgpack.encode({
-      type: returnError ? ERROR_TYPE : type,
+      type: responseType,
       data: responsePayload
     })  
   
