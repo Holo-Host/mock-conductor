@@ -4,9 +4,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2021-03-15
 ### Added
 - You can now cause a call to return an error by passing `{ returnError: true }` as the opts parameter to call to `next`, `once`, or `any`
-
 ## [0.2.0] - 2021-01-25
 ### Added
 - Filter 'args' and 'caps' out of data when generating a response key
