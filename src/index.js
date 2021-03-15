@@ -65,15 +65,15 @@ class MockHolochainConductor {
     })
   }
 
-  any (response, returnError = false) {
-    this.anyResponse = {returnError, response}
+  any (response, opts = {}) {
+    this.anyResponse = {returnError: !!opts.returnError, response}
   }
 
-  next (response, returnError = false) {
-    this.once(NEXT_TYPE, {}, response, returnError)
+  next (response, opts = {}) {
+    this.once(NEXT_TYPE, {}, response, opts)
   }
 
-  once (type, data, response, returnError = false) {
+  once (type, data, response, opts = {}) {
     if (!REQUEST_TYPES.includes(type)) {
       throw new Error (`Unknown request type: ${type}`)
     }
@@ -84,7 +84,7 @@ class MockHolochainConductor {
       this.responseQueues[responseKey] = []
     }
   
-    this.responseQueues[responseKey].push({returnError, response})
+    this.responseQueues[responseKey].push({returnError: !!opts.returnError, response})
   }
 
   clearResponses () {

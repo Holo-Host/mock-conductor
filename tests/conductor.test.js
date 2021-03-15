@@ -403,7 +403,7 @@ describe('MockHolochainConductor', () => {
   })
 
   it('can return an error if specifed', async () => {
-    mockHolochainConductor.next("error message", true)
+    mockHolochainConductor.next("error message", { returnError: true} )
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
@@ -422,7 +422,7 @@ describe('MockHolochainConductor', () => {
   })
 
   it('can return an error if specifed on a zome call', async () => {
-    mockHolochainConductor.next("error message", true)
+    mockHolochainConductor.next("error message", { returnError: true })
 
     const appWebsocket = await AppWebsocket.connect(socketPath)
 
