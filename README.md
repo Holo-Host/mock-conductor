@@ -151,15 +151,19 @@ const PORT = 8888
 ### new MockConductor(adminPort, ...appPorts)
 Returns a MockConductor instance listening on the provided ports. Pass null if you don't need the port.
 
-### .once(type, data, response)
+### .once(type, data, response, opts)
 Adds a response to the response queue corresponding with `type` and `data`. The front response in this queue is returned for any call with the same `type` and `data`. Note, for the purpose of matching, the `payload` and `provenance` fields are stripped out of `data`, so if you want to have different responses depending on those fields you will have to provide a custom closure (see below)
 
-### .next(response)
+If `opts.returnError` is `true`, then it will return an error response instead of success.
+
+### .next(response, opts)
 Adds a response to the next queue. This front response in this queue will be returned the next time any call is made.
 
-### .any(response)
+If `opts.returnError` is `true`, then it will return an error response instead of success.
+### .any(response, opts)
 Adds a catchall constant response. This response will be returned any time a call is made that does not already have a response in the response queue.
 
+If `opts.returnError` is `true`, then it will return an error response instead of success.
 ### .clearResponses()
 Clears all queues and the `all` response. 
 
