@@ -65,15 +65,15 @@ class MockHolochainConductor {
     })
   }
 
-  any (response) {
-    this.anyResponse = response
+  any (response, returnError = false) {
+    this.anyResponse = {returnError, response}
   }
 
-  next (response) {
-    this.once(NEXT_TYPE, {}, response)
+  next (response, returnError = false) {
+    this.once(NEXT_TYPE, {}, response, returnError)
   }
 
-  once (type, data, response) {
+  once (type, data, response, returnError = false) {
     if (!REQUEST_TYPES.includes(type)) {
       throw new Error (`Unknown request type: ${type}`)
     }
@@ -84,7 +84,7 @@ class MockHolochainConductor {
       this.responseQueues[responseKey] = []
     }
   
-    this.responseQueues[responseKey].push(response)  
+    this.responseQueues[responseKey].push({returnError, response})
   }
 
   clearResponses () {
@@ -133,14 +133,16 @@ class MockHolochainConductor {
     const { type, data } = request 
     
     let responseOrResponseFunc
+    let returnError
 
     try {
-      responseOrResponseFunc = this.getSavedResponse(type, data)
+      const { returnError: returnError2, response: responseOrResponseFunc2 } = this.getSavedResponse(type, data)
+      returnError = returnError2
+      responseOrResponseFunc = responseOrResponseFunc2
     } catch (e) {
-      responseOrResponseFunc = {
-        type: ERROR_TYPE,
-        message: e.message
-      }
+      responseOrResponseFunc = e.message
+      returnError = true
+
     }
 
     let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
@@ -151,7 +153,7 @@ class MockHolochainConductor {
     }
     
     const responseData = msgpack.encode({
-      type,
+      type: returnError ? ERROR_TYPE : type,
       data: responsePayload
     })  
   

@@ -240,11 +240,16 @@ describe('MockHolochainConductor', () => {
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
 
-    const result = await adminWebsocket.generateAgentPubKey()
+    let result
+    try {
+      result = {type: GENERATE_AGENT_PUB_KEY_TYPE, data: await adminWebsocket.generateAgentPubKey()}
+    } catch(e) {
+      result = e
+    }
 
     expect(result).toEqual({
       type: ERROR_TYPE,
-      message: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
+      data: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
     })
   })
 
@@ -265,12 +270,17 @@ describe('MockHolochainConductor', () => {
     mockHolochainConductor.clearResponses()
 
     const adminWebsocket = await AdminWebsocket.connect(socketPath)
-
-    const result = await adminWebsocket.generateAgentPubKey()
+    
+    let result
+    try {
+      result = {type: GENERATE_AGENT_PUB_KEY_TYPE, data: await adminWebsocket.generateAgentPubKey()}
+    } catch(e) {
+      result = e
+    }
 
     expect(result).toEqual({
       type: ERROR_TYPE,
-      message: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
+      data: `No more responses for: ${GENERATE_AGENT_PUB_KEY_TYPE}:{}`
     })
   })
 
@@ -382,5 +392,20 @@ describe('MockHolochainConductor', () => {
 
     expect(onSignal1).toHaveBeenCalledTimes(3)
     expect(onSignal2).toHaveBeenCalledTimes(1)
+  })
+
+  it('can return an error if specifed', async () => {
+    mockHolochainConductor.next("error message", true)
+
+    const adminWebsocket = await AdminWebsocket.connect(socketPath)
+
+    let result
+    try {
+      result = {type: GENERATE_AGENT_PUB_KEY_TYPE, data: await adminWebsocket.generateAgentPubKey()}
+    } catch(e) {
+      result = e
+    }
+
+    expect(result).toEqual({type: ERROR_TYPE, data: "error message"})
   })
 })
