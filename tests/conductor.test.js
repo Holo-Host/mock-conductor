@@ -244,7 +244,11 @@ describe('MockHolochainConductor', () => {
     try {
       result = {type: GENERATE_AGENT_PUB_KEY_TYPE, data: await adminWebsocket.generateAgentPubKey()}
     } catch(e) {
-      result = e
+      if (e.type === ERROR_TYPE) {
+        result = e
+      } else {
+        throw(e)
+      }
     }
 
     expect(result).toEqual({
@@ -275,7 +279,11 @@ describe('MockHolochainConductor', () => {
     try {
       result = {type: GENERATE_AGENT_PUB_KEY_TYPE, data: await adminWebsocket.generateAgentPubKey()}
     } catch(e) {
-      result = e
+      if (e.type === ERROR_TYPE) {
+        result = e
+      } else {
+        throw(e)
+      }
     }
 
     expect(result).toEqual({
@@ -403,7 +411,30 @@ describe('MockHolochainConductor', () => {
     try {
       result = {type: GENERATE_AGENT_PUB_KEY_TYPE, data: await adminWebsocket.generateAgentPubKey()}
     } catch(e) {
-      result = e
+      if (e.type === ERROR_TYPE) {
+        result = e
+      } else {
+        throw(e)
+      }
+    }
+
+    expect(result).toEqual({type: ERROR_TYPE, data: "error message"})
+  })
+
+  it('can return an error if specifed on a zome call', async () => {
+    mockHolochainConductor.next("error message", true)
+
+    const appWebsocket = await AppWebsocket.connect(socketPath)
+
+    let result
+    try {
+      result = {type: ZOME_CALL_TYPE, data: await appWebsocket.callZome({payload: "payload"})}
+    } catch(e) {
+      if (e.type === ERROR_TYPE) {
+        result = e
+      } else {
+        throw(e)
+      }
     }
 
     expect(result).toEqual({type: ERROR_TYPE, data: "error message"})
