@@ -1,5 +1,5 @@
 const WebSocket = require('ws')
-const msgpack = require('@msgpack/msgpack')
+const { encode, decode} = require('@msgpack/msgpack');
 const _ = require('lodash')
 
 function generateResponseKey (type, data) {
@@ -16,10 +16,17 @@ const ATTACH_APP_INTERFACE_TYPE = 'attach_app_interface'
 const DEACTIVATE_APP_TYPE = 'deactivate_app'
 const DUMP_TYPE = 'dump_state'
 const GENERATE_AGENT_PUB_KEY_TYPE = 'generate_agent_pub_key'
+const REGISTER_DNA_TYPE = 'register_dna'
 const INSTALL_APP_TYPE = 'install_app'
+const CREATE_CLONE_CELL_TYPE = 'create_clone_cell'
+const INSTALL_APP_BUNDLE_TYPE = 'install_app_bundle'
 const LIST_DNAS_TYPE = 'list_dnas'
 const LIST_CELL_IDS_TYPE = 'list_cell_ids'
-const LIST_ACTIVE_APP_IDS_TYPE = 'list_active_app_ids'
+const LIST_ACTIVE_APPS_TYPE = 'list_active_apps'
+const LIST_APP_INTERFACES_TYPE = 'list_app_interfaces'
+const REQUEST_AGENT_INFO_TYPE = 'request_agent_info'
+const ADD_AGENT_INFO_TYPE = 'add_agent_info'
+
 // Error
 const ERROR_TYPE = 'error'
 
@@ -28,7 +35,8 @@ const NEXT_TYPE = 'next'
 
 const REQUEST_TYPES = [
   APP_INFO_TYPE, ZOME_CALL_TYPE, ACTIVATE_APP_TYPE, ATTACH_APP_INTERFACE_TYPE, DEACTIVATE_APP_TYPE, DUMP_TYPE, 
-  GENERATE_AGENT_PUB_KEY_TYPE, INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APP_IDS_TYPE, NEXT_TYPE
+  GENERATE_AGENT_PUB_KEY_TYPE, INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APPS_TYPE, LIST_APP_INTERFACES_TYPE,
+  REQUEST_AGENT_INFO_TYPE, ADD_AGENT_INFO_TYPE, REGISTER_DNA_TYPE, INSTALL_APP_BUNDLE_TYPE, CREATE_CLONE_CELL_TYPE, NEXT_TYPE
 ]
 
 const NEXT_RESPONSE_KEY = generateResponseKey(NEXT_TYPE, {})
@@ -127,9 +135,9 @@ class MockHolochainConductor {
   }
 
   handleHCRequest (message, ws) {
-    const decoded = msgpack.decode(message)
+    const decoded = decode(message)
     const { id } = decoded
-    const request = msgpack.decode(decoded.data)
+    const request = decode(decoded.data)
     const { type, data } = request 
     
     let responseOrResponseFunc
@@ -150,14 +158,13 @@ class MockHolochainConductor {
 
     if (responseType === ZOME_CALL_TYPE) {
       // there's an extra layer of encoding in the zome call responses
-      responsePayload = msgpack.encode(responsePayload)
+      responsePayload = encode(responsePayload)
     }
     
-    const responseData = msgpack.encode({
+    const responseData = encode({
       type: responseType,
       data: responsePayload
-    })  
-  
+    })
   
     const response = {
       type: 'Response',
@@ -165,14 +172,14 @@ class MockHolochainConductor {
       data: responseData
     }
   
-    ws.send(msgpack.encode(response))
+    ws.send(encode(response))
   }
 
   async broadcastAppSignal (cellId, signalData) {
-    const message = msgpack.encode({
+    const message = encode({
       type: 'Signal',
-      data: msgpack.encode({
-        App: [cellId, msgpack.encode(signalData)]
+      data: encode({
+        App: [cellId, encode(signalData)]
       })
     })
 
@@ -194,8 +201,15 @@ module.exports.ATTACH_APP_INTERFACE_TYPE = ATTACH_APP_INTERFACE_TYPE
 module.exports.DEACTIVATE_APP_TYPE = DEACTIVATE_APP_TYPE
 module.exports.DUMP_TYPE = DUMP_TYPE
 module.exports.GENERATE_AGENT_PUB_KEY_TYPE = GENERATE_AGENT_PUB_KEY_TYPE
+module.exports.REGISTER_DNA_TYPE = REGISTER_DNA_TYPE
 module.exports.INSTALL_APP_TYPE = INSTALL_APP_TYPE
+module.exports.CREATE_CLONE_CELL_TYPE = CREATE_CLONE_CELL_TYPE
+module.exports.INSTALL_APP_BUNDLE_TYPE = INSTALL_APP_BUNDLE_TYPE
 module.exports.LIST_DNAS_TYPE = LIST_DNAS_TYPE
 module.exports.LIST_CELL_IDS_TYPE = LIST_CELL_IDS_TYPE
-module.exports.LIST_ACTIVE_APP_IDS_TYPE = LIST_ACTIVE_APP_IDS_TYPE
+module.exports.LIST_ACTIVE_APP = LIST_ACTIVE_APPS_TYPE
+module.exports.LIST_APP_INTERFACES = LIST_APP_INTERFACES_TYPE
+module.exports.REQUEST_AGENT_INFO = REQUEST_AGENT_INFO_TYPE
+module.exports.ADD_AGENT_INFO = ADD_AGENT_INFO_TYPE
+
 module.exports.ERROR_TYPE = ERROR_TYPE

@@ -5,16 +5,16 @@
 
 Javascript library for mocking the [Holochain](https://github.com/holochain/holochain) conductor.
 
-This works with [holochain-conductor-api version 0.0.1-dev.14](https://github.com/holochain/holochain-conductor-api/releases/tag/v0.0.1-dev.14)
+This works with [holochain-conductor-api version 0.0.1](https://github.com/holochain/holochain-conductor-api/releases/tag/v0.0.1)
 
 [![](https://img.shields.io/github/issues-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/issues)
 [![](https://img.shields.io/github/issues-closed-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/issues?q=is%3Aissue+is%3Aclosed)
 [![](https://img.shields.io/github/issues-pr-raw/holo-host/mock-conductor?style=flat-square)](https://github.com/holo-host/mock-conductor/pulls)
 
 ## Overview
-This module is primarily for testing code that calls the holochain conductor through the holochain conductor API.
+This module is primarily for testing code that calls the holochain conductor through the holochain conductor API. It operates by running a websocket server which can be controlled to provide properly (msgpack) encoded messages to requests from one of the `AppWebsocket` or `AdminWebsocket` classes from `@holochain/conductor-api`.
 
-### Instalation
+### Installation
 
 `npm install @holo-host/mock-conductor --save-dev`
 
@@ -177,7 +177,8 @@ Closes all running websocket servers
 The module also exports the following constants, which correspond to specific functions of AppWebsocket and AdminWebsocket.
 ```
 const {
-  APP_INFO_TYPE, ZOME_CALL_TYPE, ACTIVATE_APP_TYPE, ATTACH_APP_INTERFACE_TYPE, DEACTIVATE_APP_TYPE, DUMP_TYPE, GENERATE_AGENT_PUB_KEY_TYPE,
-  INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APP_IDS_TYPE
+  APP_INFO_TYPE, ZOME_CALL_TYPE, ACTIVATE_APP_TYPE, ATTACH_APP_INTERFACE_TYPE, DEACTIVATE_APP_TYPE, DUMP_TYPE, 
+  GENERATE_AGENT_PUB_KEY_TYPE, INSTALL_APP_TYPE, LIST_DNAS_TYPE, LIST_CELL_IDS_TYPE, LIST_ACTIVE_APPS_TYPE, LIST_APP_INTERFACES_TYPE,
+  REQUEST_AGENT_INFO_TYPE, ADD_AGENT_INFO_TYPE, REGISTER_DNA_TYPE, INSTALL_APP_BUNDLE_TYPE, CREATE_CLONE_CELL_TYPE, NEXT_TYPE
 } = require('@holo-host/mock-conductor')
 ```
