@@ -59,12 +59,13 @@ describe('MockHolochainConductor', () => {
     const mockedCellId = [
       'hash', 'agentKey'
     ]
+    const cellNick = 'mock cell nick'
 
     const appId = 'test-app'  
 
     const appInfoData = { app_id: appId }
     
-    const expectedResponse = { cell_data: [[mockedCellId]] }
+    const expectedResponse = { cell_data: [{ cell_id: mockedCellId, cell_nick: cellNick }] }
 
     mockHolochainConductor.once(APP_INFO_TYPE, appInfoData, expectedResponse)
 
@@ -72,7 +73,7 @@ describe('MockHolochainConductor', () => {
 
     const appInfo = await appWebsocket.appInfo({ app_id: appId })
 
-    expect(appInfo.cell_data[0][0]).toEqual(mockedCellId)
+    expect(appInfo.cell_data[0].cell_id).toEqual(mockedCellId)
   })
 
   it('returns the given response to zome call', async () => {
@@ -324,6 +325,7 @@ describe('MockHolochainConductor', () => {
     const mockedCellId = [
       'hash', 'agentKey'
     ]
+    const cellNick = 'mock cell nick'
 
     const appId = 'test-app'  
 
@@ -335,7 +337,7 @@ describe('MockHolochainConductor', () => {
       cap: '4'
     }
     
-    const expectedResponse = { cell_data: [[mockedCellId]] }
+    const expectedResponse = { cell_data: [{ cell_id: mockedCellId, cell_nick: cellNick }] }
 
     mockHolochainConductor.once(APP_INFO_TYPE, appInfoData, expectedResponse)
 
@@ -349,10 +351,12 @@ describe('MockHolochainConductor', () => {
       cap: 'not 4'
     })
 
-    expect(appInfo.cell_data[0][0]).toEqual(mockedCellId)
+    expect(appInfo.cell_data[0].cell_id).toEqual(mockedCellId)
   })
 
   it('can broadcast signals on app interfaces', async () => {
+    const timeout = 5000
+
     const port1 = PORT + 1
     const socketPath1 = `ws://localhost:${port1}`
 
@@ -368,7 +372,7 @@ describe('MockHolochainConductor', () => {
     let signalResolve1
     let signalPromise1 = new Promise(resolve => signalResolve1 = resolve)
     const onSignal1 = jest.fn(() => signalResolve1())
-    await AppWebsocket.connect(socketPath1, signal => onSignal1(signal))
+    await AppWebsocket.connect(socketPath1, timeout, signal => onSignal1(signal))
 
     await mockHolochainConductor.broadcastAppSignal("cellId2", "payload2")
 
@@ -388,7 +392,7 @@ describe('MockHolochainConductor', () => {
     let signalResolve2
     const signalPromise2 = new Promise(resolve => signalResolve2 = resolve)
     const onSignal2 = jest.fn(() => signalResolve2())
-    await AppWebsocket.connect(socketPath2, signal => onSignal2(signal))
+    await AppWebsocket.connect(socketPath2, timeout, signal => onSignal2(signal))
 
     // Test emitting a signal across two different connections on two different ports
     await mockHolochainConductor.broadcastAppSignal("cellId4", "payload4")

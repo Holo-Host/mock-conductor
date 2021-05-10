@@ -15,7 +15,7 @@
   "author": "",
   "license": "CAL-1.0",
   "dependencies": {
-    "@msgpack/msgpack": "^2.3.0",
+    "@msgpack/msgpack": "2.4.0",
     "lodash": "^4.17.20",
     "ws": "^7.4.0"
   },
