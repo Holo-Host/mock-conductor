@@ -1,6 +1,6 @@
 {
   "name": "@holo-host/mock-conductor",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Javascript library for mocking the Holochain Conductor.",
   "main": "src/index.js",
   "scripts": {
@@ -15,12 +15,12 @@
   "author": "",
   "license": "CAL-1.0",
   "dependencies": {
-    "@msgpack/msgpack": "^2.3.0",
+    "@msgpack/msgpack": "2.4.0",
     "lodash": "^4.17.20",
     "ws": "^7.4.0"
   },
   "devDependencies": {
-    "@holochain/conductor-api": "0.0.1-dev.14",
+    "@holochain/conductor-api": "^0.0.4",
     "jest": "^26.6.3"
   }
 }
