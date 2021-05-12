@@ -134,7 +134,7 @@ class MockHolochainConductor {
     return this.responseQueues[responseKey].shift()
   }
 
-  handleHCRequest (message, ws) {
+  async handleHCRequest (message, ws) {
     const decoded = decode(message)
     const { id } = decoded
     const request = decode(decoded.data)
@@ -153,7 +153,7 @@ class MockHolochainConductor {
 
     }
 
-    let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
+    let responsePayload = _.isFunction(responseOrResponseFunc) ? (await responseOrResponseFunc(request)) : responseOrResponseFunc
     const responseType = returnError ? ERROR_TYPE : type
 
     if (responseType === ZOME_CALL_TYPE) {
