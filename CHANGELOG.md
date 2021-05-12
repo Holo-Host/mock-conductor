@@ -4,6 +4,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Now awaits callbacks passed to `.once`, `.next` and `.any`.
+
 ## [0.3.2] - 2021-05-10
 
 Bumps msg-pack depenancy to v2.4.0
