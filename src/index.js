@@ -39,6 +39,26 @@ const REQUEST_TYPES = [
   REQUEST_AGENT_INFO_TYPE, ADD_AGENT_INFO_TYPE, REGISTER_DNA_TYPE, INSTALL_APP_BUNDLE_TYPE, CREATE_CLONE_CELL_TYPE, NEXT_TYPE
 ]
 
+const RESPONSE_TYPES = {
+  [APP_INFO_TYPE]: APP_INFO_TYPE,
+  [ZOME_CALL_TYPE]: ZOME_CALL_TYPE,
+  [ACTIVATE_APP_TYPE]: 'app_activated',
+  [ATTACH_APP_INTERFACE_TYPE]: 'app_interface_attached',
+  [DEACTIVATE_APP_TYPE]: 'app_deactivated',
+  [DUMP_TYPE]: 'state_dumped',
+  [GENERATE_AGENT_PUB_KEY_TYPE]: 'agent_pub_key_generated',
+  [INSTALL_APP_TYPE]: 'app_installed',
+  [LIST_DNAS_TYPE]: 'dnas_listed',
+  [LIST_CELL_IDS_TYPE]: 'cell_ids_listed',
+  [LIST_ACTIVE_APPS_TYPE]: 'active_apps_listed',
+  [LIST_APP_INTERFACES_TYPE]: 'app_interfaces_listed',
+  [REQUEST_AGENT_INFO_TYPE]: 'agent_info_requested',
+  [ADD_AGENT_INFO_TYPE]: 'agent_info_added',
+  [REGISTER_DNA_TYPE]: 'dna_registered',
+  [INSTALL_APP_BUNDLE_TYPE]: 'app_bundle_installed',
+  [CREATE_CLONE_CELL_TYPE]: 'clone_cell_created'
+}
+
 const NEXT_RESPONSE_KEY = generateResponseKey(NEXT_TYPE, {})
 
 class MockHolochainConductor {
@@ -138,13 +158,13 @@ class MockHolochainConductor {
     const decoded = decode(message)
     const { id } = decoded
     const request = decode(decoded.data)
-    const { type, data } = request 
+    const { type: request_type, data } = request 
     
     let responseOrResponseFunc
     let returnError
 
     try {
-      const { returnError: returnError2, response: responseOrResponseFunc2 } = this.getSavedResponse(type, data)
+      const { returnError: returnError2, response: responseOrResponseFunc2 } = this.getSavedResponse(request_type, data)
       returnError = returnError2
       responseOrResponseFunc = responseOrResponseFunc2
     } catch (e) {
@@ -154,7 +174,7 @@ class MockHolochainConductor {
     }
 
     let responsePayload = _.isFunction(responseOrResponseFunc) ? responseOrResponseFunc(request) : responseOrResponseFunc
-    const responseType = returnError ? ERROR_TYPE : type
+    const responseType = returnError ? ERROR_TYPE : (RESPONSE_TYPES[request_type] || request_type)
 
     if (responseType === ZOME_CALL_TYPE) {
       // there's an extra layer of encoding in the zome call responses
